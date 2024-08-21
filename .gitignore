@@ -1,1 +1,10 @@
+# python venv
+
 .venv/
+
+# default directories
+examples/
+data/
+
+# temporary generated files
+*.pyc
