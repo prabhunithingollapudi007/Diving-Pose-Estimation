@@ -1,5 +1,6 @@
 import argparse, os
 import cv2
+import numpy as np
 from preprocess import preprocess_frame
 from infer import run_movenet, upscale_keypoints
 from postprocess import draw_keypoints
@@ -84,7 +85,9 @@ def process_video(args):
         frame = draw_keypoints(size_reduced_frame, keypoints, threshold=0.2)
         # Display the output frame
         if args.live == True:
-            cv2.imshow('Live Pose Estimation', frame)
+            # Concatenate the original frame and the frame with keypoints side by side
+            side_by_side_frame = np.hstack((processed_frame, frame))
+            cv2.imshow('Live Pose Estimation', side_by_side_frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
