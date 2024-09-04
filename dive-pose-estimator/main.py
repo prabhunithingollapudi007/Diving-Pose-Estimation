@@ -4,18 +4,18 @@ from preprocess import preprocess_frame
 from infer import run_movenet, upscale_keypoints
 from postprocess import draw_keypoints
 
-MODEL_INPUT_SIZE = (192, 192)
+MODEL_INPUT_SIZE = (256, 256)
 
 def read_args():
     parser = argparse.ArgumentParser(description='Dive Pose Estimator')
-    parser.add_argument('--video', type=str, default='../data/raw/video.mp4', help='Path to the input video file', required=True)
-    parser.add_argument('--output', type=str, default='../data/interim/video_output.mp4', help='Path to the output video file', required=True)
+    parser.add_argument('--video', type=str, help='Path to the input video file', required=True)
+    parser.add_argument('--output', type=str, help='Path to the output video file', required=True)
     parser.add_argument('--model', type=str, default='../models/movenet_thunder.tflite', help='Path to the model', required=False)
-    parser.add_argument('--rotate', type=bool, default=True, help='Rotate the video 90 degrees clockwise.', required=False)
-    parser.add_argument('--resize', type=bool, default=False, help='Resize the input video.', required=False)
+    parser.add_argument('--rotate', type=lambda x: (str(x).lower() == 'true'), choices=[True, False], default=True, help='Rotate the video 90 degrees clockwise.')
+    parser.add_argument('--resize', type=lambda x: (str(x).lower() == 'true'), choices=[True, False], default=False, help='Resize the input video.')
     parser.add_argument('--width', type=int, default=192, help='Resize input to specific width.', required=False)
     parser.add_argument('--height', type=int, default=192, help='Resize input to specific height.', required=False)
-    parser.add_argument('--live', type=bool, default=False, help='Display the output video in a window.', required=False)
+    parser.add_argument('--live', type=lambda x: (str(x).lower() == 'true'), choices=[True, False], default=False, help='Display the output video in a window.')
 
     args = parser.parse_args()
     return args
@@ -34,6 +34,12 @@ def validate_args(args):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    # print the arguments
+    print("===== Arguments =====")
+    for arg in vars(args):
+        print(f"{arg}: {getattr(args, arg)}")
+    print("=====================")
+
 def process_video(args):
     try:
         cap = cv2.VideoCapture(args.video)
@@ -47,11 +53,11 @@ def process_video(args):
     target_frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     target_frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    if args.resize:
+    if args.resize == True:
         target_frame_width = args.width
         target_frame_height = args.height
 
-    if args.rotate:
+    if args.rotate == True:
         target_frame_width, target_frame_height = target_frame_height, target_frame_width
 
     cap = cv2.VideoCapture(args.video)
@@ -62,24 +68,22 @@ def process_video(args):
     out = cv2.VideoWriter(args.output, fourcc, 30.0, (target_frame_width, target_frame_height))
 
     while cap.isOpened():
-        ret, frame = cap.read()
+        ret, original_frame = cap.read()
         if not ret:
             break
-
         # Process the frame here
-        frame = preprocess_frame(frame, rotate=args.rotate, resize=args.resize, width=target_frame_width, height=target_frame_height)
+        processed_frame = preprocess_frame(original_frame, rotate=args.rotate, resize=args.resize, width=target_frame_width, height=target_frame_height)
 
         # Run MoveNet inference
         # By default, the frame is resized to 192x192 pixels (the input size for MoveNet)
-        processed_frame = preprocess_frame(frame, rotate=args.rotate, resize=True, width=MODEL_INPUT_SIZE[0], height=MODEL_INPUT_SIZE[1])
-        keypoints = run_movenet(processed_frame)
+        size_reduced_frame = preprocess_frame(processed_frame, rotate=args.rotate, resize=True, width=MODEL_INPUT_SIZE[0], height=MODEL_INPUT_SIZE[1])
+        keypoints = run_movenet(size_reduced_frame)
         keypoints = upscale_keypoints(keypoints, target_frame_width, target_frame_height)
 
         # Post-process the keypoints (e.g., draw them on the frame)
-        frame = draw_keypoints(frame, keypoints, threshold=0.2)
-
+        frame = draw_keypoints(size_reduced_frame, keypoints, threshold=0.2)
         # Display the output frame
-        if args.live:
+        if args.live == True:
             cv2.imshow('Live Pose Estimation', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break

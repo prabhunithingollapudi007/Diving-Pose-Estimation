@@ -1,11 +1,20 @@
 import numpy as np
 import tensorflow as tf, tensorflow_hub as hub
-import cv2
+import shutil, os
 
+# Check TensorFlow and TensorFlow Hub versions
+print(f"TensorFlow version: {tf.__version__}")
+print(f"TensorFlow Hub version: {hub.__version__}")
 
 # Load the MoveNet model
-movenet = hub.load("https://tfhub.dev/google/movenet/singlepose/lightning/4")
-movenet_fn = movenet.signatures['serving_default']
+try:
+    movenet = hub.load("https://tfhub.dev/google/movenet/singlepose/thunder/4")
+    movenet_fn = movenet.signatures['serving_default']
+except ValueError as e:
+    print(f"Error loading model: {e}")
+    # Handle the error, e.g., by exiting or using a fallback model
+    exit(1)
+
 
 def run_movenet(frame):
     # Perform inference using MoveNet

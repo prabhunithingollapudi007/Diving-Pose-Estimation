@@ -28,3 +28,17 @@ Questions:
 2. Background to be removed or not ?
 3. How many frames per second are required ?
 4. Video format to be used (input and output)?
+
+
+
+29 aug 2024
+
+1. Work on ideal video
+2. Change brightness, contrast, saturation to highlight the person in the video
+3. Remove background
+4. RTMO and RTM check time complexities
+
+
+04 Sep 2024
+
+1. Drawing joints on ideal yoga video
