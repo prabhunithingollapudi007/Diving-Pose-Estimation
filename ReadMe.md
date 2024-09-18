@@ -5,7 +5,7 @@
 To process a video, run the following command:
 
 ```bash
-python .\main.py --video ../data/raw/ideal-test.mp4 --output ../data/interim/Ideal.mp4 --live true --rotate false --resize true --width 256 --height 256
+python .\main.py --video ../data/raw/ideal-test.mp4 --output ../data/interim/Ideal.mp4 --live true --rotate false
 ```
 
 use the `--help` flag to see all the available options:

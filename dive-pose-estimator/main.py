@@ -13,9 +13,13 @@ def read_args():
     parser.add_argument('--output', type=str, help='Path to the output video file', required=True)
     parser.add_argument('--model', type=str, default='../models/movenet_thunder.tflite', help='Path to the model', required=False)
     parser.add_argument('--rotate', type=lambda x: (str(x).lower() == 'true'), choices=[True, False], default=True, help='Rotate the video 90 degrees clockwise.')
+    
+    """ 
     parser.add_argument('--resize', type=lambda x: (str(x).lower() == 'true'), choices=[True, False], default=False, help='Resize the input video.')
     parser.add_argument('--width', type=int, default=192, help='Resize input to specific width.', required=False)
     parser.add_argument('--height', type=int, default=192, help='Resize input to specific height.', required=False)
+     """
+    
     parser.add_argument('--live', type=lambda x: (str(x).lower() == 'true'), choices=[True, False], default=False, help='Display the output video in a window.')
 
     args = parser.parse_args()
@@ -51,12 +55,12 @@ def process_video(args):
         print("File not found: " + args.video)
         return
 
-    target_frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    target_frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    target_frame_width = MODEL_INPUT_SIZE[0]
+    target_frame_height = MODEL_INPUT_SIZE[1]
 
-    if args.resize == True:
+    """ if args.resize == True:
         target_frame_width = args.width
-        target_frame_height = args.height
+        target_frame_height = args.height """
 
     if args.rotate == True:
         target_frame_width, target_frame_height = target_frame_height, target_frame_width
@@ -64,7 +68,7 @@ def process_video(args):
     cap = cv2.VideoCapture(args.video)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 
-    print(f"Output video dimensions: {target_frame_width}x{target_frame_height} as the flag resize is set to {args.resize} and rotate is set to {args.rotate}")
+    print(f"Output video dimensions: {target_frame_width}x{target_frame_height} as rotate is set to {args.rotate}")
 
     out = cv2.VideoWriter(args.output, fourcc, 30.0, (target_frame_width, target_frame_height))
 
@@ -72,12 +76,11 @@ def process_video(args):
         ret, original_frame = cap.read()
         if not ret:
             break
-        # Process the frame here
-        processed_frame = preprocess_frame(original_frame, rotate=args.rotate, resize=args.resize, width=target_frame_width, height=target_frame_height)
 
         # Run MoveNet inference
-        # By default, the frame is resized to 192x192 pixels (the input size for MoveNet)
-        size_reduced_frame = preprocess_frame(processed_frame, rotate=args.rotate, resize=True, width=MODEL_INPUT_SIZE[0], height=MODEL_INPUT_SIZE[1])
+        # By default, the frame is resized to 256*256 pixels (the input size for MoveNet)
+        size_reduced_frame = preprocess_frame(original_frame, rotate=args.rotate, resize=True, width=target_frame_width, height=target_frame_height)
+        
         keypoints = run_movenet(size_reduced_frame)
         keypoints = upscale_keypoints(keypoints, target_frame_width, target_frame_height)
 
@@ -86,7 +89,7 @@ def process_video(args):
         # Display the output frame
         if args.live == True:
             # Concatenate the original frame and the frame with keypoints side by side
-            side_by_side_frame = np.hstack((processed_frame, frame))
+            side_by_side_frame = np.hstack((size_reduced_frame, frame))
             cv2.imshow('Live Pose Estimation', side_by_side_frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break

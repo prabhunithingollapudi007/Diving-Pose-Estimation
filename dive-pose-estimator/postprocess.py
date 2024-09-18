@@ -8,6 +8,7 @@ BLUE_COLOR = (255, 0, 0)
 BLACK_COLOR = (0, 0, 0)
 
 def draw_keypoints(frame, keypoints, threshold=0.2):
+    copied_frame = np.copy(frame)
     keypoints = np.squeeze(keypoints)
 
     # Draw only joints with confidence above the threshold
@@ -27,7 +28,7 @@ def draw_keypoints(frame, keypoints, threshold=0.2):
     right_leg = ["right ankle", "right knee", "right hip"]
     left_leg = ["left ankle", "left knee", "left hip"]
 
-    # Draw keypoints on the frame
+    # Draw keypoints on the copied_frame
     dot_color = GREEN_COLOR
 
     for i in range(len(label)):
@@ -35,7 +36,7 @@ def draw_keypoints(frame, keypoints, threshold=0.2):
         if confidence > threshold:
             x = int(keypoints[i][1])
             y = int(keypoints[i][0])
-            cv2.circle(frame, (x, y), 4, dot_color, -1)
+            cv2.circle(copied_frame, (x, y), 4, dot_color, -1)
 
 
     lines = [(label.index(start), label.index(end)) for start, end in connections]
@@ -48,16 +49,16 @@ def draw_keypoints(frame, keypoints, threshold=0.2):
             
             
             if label[line[0]] in facial_keypoints and label[line[1]] in facial_keypoints:
-                cv2.line(frame, start, end, RED_COLOR, 2)
+                cv2.line(copied_frame, start, end, RED_COLOR, 2)
             elif label[line[0]] in right_hand and label[line[1]] in right_hand:
-                cv2.line(frame, start, end, BLUE_COLOR, 2)
+                cv2.line(copied_frame, start, end, BLUE_COLOR, 2)
             elif label[line[0]] in left_hand and label[line[1]] in left_hand:
-                cv2.line(frame, start, end, BLUE_COLOR, 2)
+                cv2.line(copied_frame, start, end, BLUE_COLOR, 2)
             elif label[line[0]] in right_leg and label[line[1]] in right_leg:
-                cv2.line(frame, start, end, GREEN_COLOR, 2)
+                cv2.line(copied_frame, start, end, GREEN_COLOR, 2)
             elif label[line[0]] in left_leg and label[line[1]] in left_leg:
-                cv2.line(frame, start, end, GREEN_COLOR, 2)
+                cv2.line(copied_frame, start, end, GREEN_COLOR, 2)
             else:
-                cv2.line(frame, start, end, BLACK_COLOR, 2)
+                cv2.line(copied_frame, start, end, BLACK_COLOR, 2)
 
-    return frame
+    return copied_frame

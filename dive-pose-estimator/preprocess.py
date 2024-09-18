@@ -13,6 +13,6 @@ def preprocess_frame(frame, rotate, resize, width, height):
     # Resize and pad the frame to 192x192, which is the input size for MoveNet
     if resize:
         frame = tf.image.resize_with_pad(frame, target_height=height, target_width=width)
-        frame = frame.numpy()
+        frame = frame.numpy().astype('uint8')
 
     return frame
