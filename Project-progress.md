@@ -60,10 +60,35 @@ python demo/body3d_pose_lifter_demo.py   demo/mmdetection_cfg/rtmdet_m_640-8xb32
 
 13 Dec 2024
 
-Usage of sam model - not good results.
-    
-Usage of RVM model - not good results.
+Segmentation techniques on two-person-sync_rotated.mp4
+    Total frames: 1328
+    Total time: 44 seconds
+    Total size: 366,605 KB (366.6 MB)
 
-Usage of Mediapipe - not good results but very fast. 
-    Processed 1328 frames in 43.29 seconds.
-    Average time per frame: 0.033 seconds (30.68 FPS)
+i) Usage of sam model - bad results. (may be improper implementation)
+        Segment anything: vit_b
+        Processed 1328 frames in 701.99 seconds.
+        Average time per frame: 0.529 seconds (1.89 FPS)
+        File size: 163,529 KB (163.5 MB)
+        `C:/Users/prabh/.conda/envs/openmmlab/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/models/segment-anything/sam_bg_remove.py"`
+
+ii) Usage of RVM model - great results.
+        Robust Video Matting: mobilenetv3
+        Dilate mask to make the mask bigger. (value = 150)
+        Processed 1328 frames in 383.41 seconds.
+        Average time per frame: 0.289 seconds (3.46 FPS)
+        File size: 23,224 KB (23.2 MB)
+        `C:/Users/prabh/.conda/envs/openmmlab/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/models/RobustVideoMatting/bg_remove_rvm.py"`
+
+iii) Usage of Mediapipe - good results and very fast. 
+        Mediapipe: Selfie Segmentation - model selection: General model
+        Dilate mask to make the mask bigger. (value = 200)
+        Confidence threshold: 0.2
+        Processed 1328 frames in 69.85 seconds.
+        Average time per frame: 0.053 seconds (19.01 FPS)
+        File size: 80,947 KB (80.9 MB)
+        `C:/Users/prabh/.conda/envs/openmmlab/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/dive-pose-estimator/media_pipe_segment.py"`
+
+iv) Usage of YOLO
+        YOLOv5: yolov5s
+        

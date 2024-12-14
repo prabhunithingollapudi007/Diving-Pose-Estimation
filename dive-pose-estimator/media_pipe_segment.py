@@ -8,8 +8,8 @@ mp_selfie_segmentation = mp.solutions.selfie_segmentation
 selfie_segmentation = mp_selfie_segmentation.SelfieSegmentation(model_selection=1)
 
 # Input and output video paths
-input_video_path = "../data/preprocessed/two-person-sync_preprocessed.mp4"
-output_video_path = "output_video_mediapipe.mp4"
+input_video_path = "../data/preprocessed/two-person-sync_rotated.mp4"
+output_video_path = "two-person-sync_rotated_mediapipe.mp4"
 
 # Open the input video
 cap = cv2.VideoCapture(input_video_path)
@@ -50,7 +50,11 @@ while cap.isOpened():
 
     # Generate the mask
     mask = results.segmentation_mask
-    mask = (mask > 0.1).astype(np.uint8) * 255  # Binary mask
+    mask = (mask > 0.2).astype(np.uint8) * 255  # Binary mask
+
+    # Dilate the mask to remove noise
+    kernel = np.ones((200, 200), np.uint8)
+    mask = cv2.dilate(mask, kernel, iterations=1)
 
     # Apply the mask to the frame
     foreground = cv2.bitwise_and(frame, frame, mask=mask)
@@ -69,6 +73,10 @@ while cap.isOpened():
     frame_time = time.time() - start_time
     total_time += frame_time
     frame_count += 1
+
+    # Print progress
+    if frame_count % 100 == 0:
+        print(f"Processed {frame_count} frames")
 
 # Release resources
 cap.release()
