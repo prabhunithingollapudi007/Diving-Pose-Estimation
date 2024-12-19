@@ -89,6 +89,19 @@ iii) Usage of Mediapipe - good results and very fast.
         File size: 80,947 KB (80.9 MB)
         `C:/Users/prabh/.conda/envs/openmmlab/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/dive-pose-estimator/media_pipe_segment.py"`
 
-iv) Usage of YOLO
-        YOLOv5: yolov5s
+        Pose estimation on this video
+        Processed 1328 frames in 576.60 seconds.
+        Average time per frame: 0.434 seconds (2.30 FPS)
         
+        `C:/Users/prabh/.conda/envs/openmmlab/python.exe demo/topdown_demo_with_mmdet.py demo/mmdetection_cfg/rtmdet_m_640-8xb32_coco-person.py https://download.openmmlab.com/mmpose/v1/projects/rtmpose/rtmdet_m_8xb32-100e_coco-obj365-person-235e8209.pth configs/body_2d_keypoint/rtmpose/body8/rtmpose-m_8xb256-420e_body8-256x192.py https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-body7_pt-body7_420e-256x192-e48f03d0_20230504.pth`
+
+
+iv) Usage of YOLO with deeplab V3 - good results.
+        YOLOv5: yolov5s
+        Processed 1328 frames in 742.18 seconds.
+        Average time per frame: 0.559 seconds (1.79 FPS)
+        File size: 8544 KB (8.5 MB)
+        `C:/Users/prabh/FAU/Study/MaD Project Pose Estimation/.venv/Scripts/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/dive-pose-estimator/yolo_segment.py"`
+
+Pose estimation on two-person-sync_rotated.mp4
+    
