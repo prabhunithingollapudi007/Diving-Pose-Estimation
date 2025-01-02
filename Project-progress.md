@@ -115,6 +115,10 @@ iv) Usage of YOLO with deeplab V3 - good results.
 
 19 Dec 2024
         Evaluation of the pose estimation model on two-person-sync_rotated.mp4
+        Pose estimation video settings
+        fps = 25
+        frame_width = 2048
+        frame_height = 1152
 
 02 Jan 2025
         Visualize the poses

@@ -24,9 +24,14 @@ for frame in instance_info:
     instances = frame["instances"]
     if instances:  # Ensure there are keypoints
         keypoints = [np.array(inst["keypoints"]) for inst in instances]
-        all_keypoints.append(keypoints)
-    else:
-        all_keypoints.append([])
+        if len(keypoints) != 0:
+            all_keypoints.append(keypoints)
+
+# Print the number of frames and instances
+num_frames = len(all_keypoints)
+num_instances = len(all_keypoints[0])
+
+print(f"Number of frames: {num_frames}")
 
 
 # Visualize the pose estimation results on blank canvas
