@@ -1,7 +1,7 @@
 import cv2
 
-input_video = '../data/raw/onlyonedivertwist.avi'
-output_video = '../data/preprocessed/onlyonedivertwist_preprocessed.mp4'
+input_video = '../data/raw/Jana_107B_3.5Salti_vorwaerts.avi'
+output_video = '../data/preprocessed/Jana_rotated.mp4'
 
 print(f"Input Video path: {input_video}")
 cap = cv2.VideoCapture(input_video)
@@ -30,6 +30,8 @@ if not out.isOpened():
 
 print(f"Output video dimensions: {frame_height}x{frame_width}")
 
+start_time = cv2.getTickCount()
+
 while cap.isOpened():
     ret, original_frame = cap.read()
     if not ret:
@@ -42,4 +44,10 @@ while cap.isOpened():
 cap.release()
 out.release()
 cv2.destroyAllWindows()
+
+end_time = cv2.getTickCount()
+
+total_time = (end_time - start_time) / cv2.getTickFrequency()
+print(f"Total time taken: {total_time:.2f} seconds")
+
 print(f"Output video saved at {output_video}")
