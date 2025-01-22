@@ -170,3 +170,55 @@ iii) Usage of MMPose
         RTM Pose V1
         Processed 961 frames in 700.19 seconds.
         Average time per frame: 0.729 seconds (1.37 FPS)
+
+RTM Pose various configs 
+
+Detection on video - Jana Segment
+Bounding box stats
+i) RTMDet-tiny	
+
+Processed 961 frames in 206.84 seconds.
+Average time per frame: 0.215 seconds (4.65 FPS)
+
+ii) rtmdet_nano_320-8xb32_coco-person
+
+Processed 961 frames in 52.85 seconds.
+Average time per frame: 0.055 seconds (18.18 FPS)
+
+iii) rtmdet_m_640-8xb32_coco-person
+
+Processed 961 frames in 268.29 seconds.
+Average time per frame: 0.279 seconds (3.58 FPS)
+
+Pose estimation on video - Jana Segment
+
+RTM POSE
+
+i) rtmpose-m_8xb256-420e_body8-256x192 + rtm det nano
+
+Processed 961 frames in 160.77 seconds.
+Average time per frame: 0.167 seconds (5.98 FPS)
+
+ii) rtmpose-l_8xb256-420e_body8-256x192 + rtm det nano
+
+Processed 961 frames in 203.93 seconds.
+Average time per frame: 0.212 seconds (4.71 FPS)
+
+iii) rtmpose-m_8xb256-420e_body8-384x288 + rtm det nano
+Processed 961 frames in 189.54 seconds.
+Average time per frame: 0.197 seconds (5.07 FPS)
+
+iv) rtmpose-l_8xb256-420e_body8-384x288.py + rtm det nano
+
+Processed 961 frames in 249.56 seconds.
+Average time per frame: 0.260 seconds (3.85 FPS)
+
+v) rtmpose-t_8xb256-420e_body8-256x192.py + rtm det nano
+
+Processed 961 frames in 138.73 seconds.
+Average time per frame: 0.144 seconds (6.93 FPS)
+
+vi) rtmpose-s_8xb256-420e_body8-256x192.py + rtm det nano
+
+Processed 961 frames in 151.64 seconds.
+Average time per frame: 0.158 seconds (6.34 FPS)
