@@ -239,20 +239,25 @@ def main():
             cap = cv2.VideoCapture(0)
         else:
             cap = cv2.VideoCapture(args.input)
+            original_fps = cap.get(cv2.CAP_PROP_FPS)
+
+        processing_fps = 30
 
         video_writer = None
         pred_instances_list = []
-        frame_idx = 0
+
+        print("Original FPS: ", original_fps)
+        print("Processing FPS: ", processing_fps)
 
         while cap.isOpened():
             success, frame = cap.read()
-            frame_idx += 1
 
             # Start time for this frame
             start_time = time.time()
     
             if not success:
                 break
+
 
             # topdown pose estimation
             pred_instances = process_one_image(args, frame, detector,
@@ -263,8 +268,8 @@ def main():
                 # save prediction results
                 pred_instances_list.append(
                     dict(
-                        frame_id=frame_idx,
-                        instances=split_instances(pred_instances)))
+                        frame_id=frame_count,
+                        instances=split_instances(pred_instances) if pred_instances else []))
 
             # output videos
             if output_file:

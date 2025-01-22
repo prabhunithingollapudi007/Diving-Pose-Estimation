@@ -2,11 +2,13 @@
 
 import json
 import numpy as np
+import cv2
+import time
 
-
-# Input json and output video paths
-file_path = "../data/pose-estimated/results_two-person-sync_rotated_rvm.json"
-output_video_path = "two-person-sync_rotated_rvm_pose.mp4"
+# Input json and video paths
+file_path = "../data/pose-estimated/Jana/results_Jana_segmented.json"
+input_video_path = '../data/preprocessed/Jana_rotated.mp4'
+output_video_path = "../data/Jana_side_by_side.mp4"
 
 # Load JSON file
 with open(file_path, 'r') as f:
@@ -20,12 +22,15 @@ instance_info = data["instance_info"]
 all_keypoints = []
 
 for frame in instance_info:
-    frame_id = frame["frame_id"]
     instances = frame["instances"]
     if instances:  # Ensure there are keypoints
         keypoints = [np.array(inst["keypoints"]) for inst in instances]
         if len(keypoints) != 0:
             all_keypoints.append(keypoints)
+        else:
+            all_keypoints.append([])
+    else:
+        all_keypoints.append([])
 
 # Print the number of frames and instances
 num_frames = len(all_keypoints)
@@ -33,21 +38,19 @@ num_instances = len(all_keypoints[0])
 
 print(f"Number of frames: {num_frames}")
 
-
-# Visualize the pose estimation results on blank canvas
-import cv2
-
-# Output video settings
-fps = 25
-frame_width = 2048
-frame_height = 1152
+# Video settings
+cap = cv2.VideoCapture(input_video_path)
+# fps = int(cap.get(cv2.CAP_PROP_FPS))
+fps = 25 # mmpose saves at 25 fps
+frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+cap.release()
 
 # Create a VideoWriter for the output
+output_width = frame_width * 2  # Side-by-side layout
+output_height = frame_height
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter(output_video_path, fourcc, fps, (frame_width, frame_height))
-
-# Create a blank canvas 
-canvas = np.zeros((frame_height, frame_width, 3), np.uint8)
+out = cv2.VideoWriter(output_video_path, fourcc, fps, (output_width, output_height))
 
 # Define colors for each keypoint
 
@@ -72,40 +75,73 @@ colors = [
     (255, 0, 170)  # Right ankle
 ]
 
-# Define the number of frames
-num_frames = len(all_keypoints)
-
+# Skeleton links from metadata
 skeleton_links = meta_info["skeleton_links"]
 
+# Open input video
+cap = cv2.VideoCapture(input_video_path)
+frame_idx = 0
+
+# Initialize timing variables
+frame_count = 0
+total_time = 0
+
 # Loop through frames
-for frame_idx in range(num_frames):
-    # Create blank canvas for the frame
-    frame = canvas.copy()
+while cap.isOpened():
+    ret, original_frame = cap.read()
+    if not ret:
+        break
 
-    # Get the keypoints for the frame
-    keypoints = all_keypoints[frame_idx]
+    # Start time for this frame
+    start_time = time.time()
 
-    # Loop through each instance in the frame
-    for instance_keypoints in keypoints:
-        # Draw the keypoints on the frame and skeleton connections
-        for i, keypoint in enumerate(instance_keypoints):
-            x, y = keypoint
-            cv2.circle(frame, (int(x), int(y)), 5, colors[i], -1)
+    # Create a blank canvas for the pose visualization
+    pose_frame = np.zeros((frame_height, frame_width, 3), np.uint8)
 
-        # Draw the skeleton connections
-        for connection in skeleton_links:
-            start_idx, end_idx = connection
-            if all(instance_keypoints[start_idx]) and all(instance_keypoints[end_idx]):
-                start_point = (int(instance_keypoints[start_idx][0]), int(instance_keypoints[start_idx][1]))
-                end_point = (int(instance_keypoints[end_idx][0]), int(instance_keypoints[end_idx][1]))
-                cv2.line(frame, start_point, end_point, colors[start_idx], 2)
+    # Get keypoints for the current frame
+    if frame_idx < len(all_keypoints):
+        keypoints = all_keypoints[frame_idx]
 
-    # Write the frame to the output video
-    out.write(frame)
+        if len(keypoints) != 0:
+            # Draw keypoints and skeleton on pose_frame
+            for instance_keypoints in keypoints:
+                for i, keypoint in enumerate(instance_keypoints):
+                    x, y = keypoint  # Assuming keypoints are [x, y, visibility]
+                    cv2.circle(pose_frame, (int(x), int(y)), 5, colors[i], -1)
 
+            # Draw the skeleton connections
+            for connection in skeleton_links:
+                start_idx, end_idx = connection
+                if all(instance_keypoints[start_idx]) and all(instance_keypoints[end_idx]):
+                    start_point = (int(instance_keypoints[start_idx][0]), int(instance_keypoints[start_idx][1]))
+                    end_point = (int(instance_keypoints[end_idx][0]), int(instance_keypoints[end_idx][1]))
+                    cv2.line(pose_frame, start_point, end_point, colors[start_idx], 2)
+
+
+    # Concatenate the original frame and pose visualization side by side
+    combined_frame = np.hstack((original_frame, pose_frame))
+
+    # Write the combined frame to the output video
+    out.write(combined_frame)
+
+    frame_idx += 1
+
+    # Calculate processing time for this frame
+    frame_time = time.time() - start_time
+    total_time += frame_time
+    frame_count += 1
+
+    # Print progress
+    if frame_count % 100 == 0:
+        print(f"Processed {frame_count} frames")
 
 # Release the VideoWriter and destroy all windows
 out.release()
 cv2.destroyAllWindows()
+
+# Print overall stats
+average_time_per_frame = total_time / frame_count if frame_count > 0 else 0
+print(f"Processed {frame_count} frames in {total_time:.2f} seconds.")
+print(f"Average time per frame: {average_time_per_frame:.3f} seconds ({1/average_time_per_frame:.2f} FPS)")
 
 print(f"Output video saved at {output_video_path}")
