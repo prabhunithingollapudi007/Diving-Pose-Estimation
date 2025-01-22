@@ -122,4 +122,51 @@ iv) Usage of YOLO with deeplab V3 - good results.
 
 02 Jan 2025
         Visualize the poses
-        `C:/Users/prabh/.conda/envs/openmmlab/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/dive-pose-estimator/visualize_pose.py`
+        `C:/Users/prabh/.conda/envs/openmmlab/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/dive-pose-estimator/visualize_pose.py"`
+
+08 Jan 2025
+        Use a different video for pose estimation
+
+        cd to dive-pose-estimator
+
+        Step 1 - rotate the video
+        `C:/Users/prabh/.conda/envs/openmmlab/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/dive-pose-estimator/rotate_video.py"`
+
+        Step 2 - segment the video
+        `C:/Users/prabh/.conda/envs/openmmlab/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/dive-pose-estimator/media_pipe_segment.py"`
+
+        cd to mmpose
+
+        Step 3 - pose estimation
+        `C:/Users/prabh/.conda/envs/openmmlab/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/models/mmpose/demo/topdown_demo_with_mmdet.py"`
+
+        cd to dive-pose-estimator
+
+        Step 4 - visualize the poses
+        `C:/Users/prabh/.conda/envs/openmmlab/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/dive-pose-estimator/visualize_pose.py"`
+
+        Filtering, interpolation - linear / quadratic, aspect ratio fix, angles, side by side view 
+
+21 Jan 2025
+
+Pose estimation techniques on Segmented video - Jana_segmented.mp4
+
+
+i) Usage of Mediapipe - poor results and very fast. 
+        Mediapipe: model complexity: 2
+        Confidence threshold: 0.2
+        Processed 961 frames in 42.24 seconds.
+        Average time per frame: 0.044 seconds (22.75 FPS)
+        `C:/Users/prabh/.conda/envs/openmmlab/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/dive-pose-estimator/media_pipe_pose_estimation.py"`
+
+ii) Usage of Movenet - average results and very fast
+        Movenet - single pose, thunder
+        Confidence threshold: 0.2
+        Processed 961 frames in 31.46 seconds.
+        Average time per frame: 0.033 seconds (30.54 FPS)
+        `C:/Users/prabh/.conda/envs/openmmlab/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/dive-pose-estimator/movenet_pose_estimation.py"`
+
+iii) Usage of MMPose
+        RTM Pose V1
+        Processed 961 frames in 700.19 seconds.
+        Average time per frame: 0.729 seconds (1.37 FPS)
