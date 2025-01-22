@@ -222,3 +222,8 @@ vi) rtmpose-s_8xb256-420e_body8-256x192.py + rtm det nano
 
 Processed 961 frames in 151.64 seconds.
 Average time per frame: 0.158 seconds (6.34 FPS)
+
+vii) crowdpose/rtmpose-m_8xb64-210e_crowdpose-256x192.py + rtm det nano
+
+Processed 961 frames in 136.81 seconds.
+Average time per frame: 0.142 seconds (7.02 FPS)
