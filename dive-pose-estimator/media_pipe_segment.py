@@ -9,7 +9,7 @@ selfie_segmentation = mp_selfie_segmentation.SelfieSegmentation(model_selection=
 
 # Input and output video paths
 input_video_path = "../data/preprocessed/two-person-sync_rotated.mp4"
-output_video_path = "two-person-sync_rotated_mediapipe.mp4"
+output_video_path = "../data/segmented/two-person-sync_rotated_segmented.mp4"
 
 # Open the input video
 cap = cv2.VideoCapture(input_video_path)
@@ -87,3 +87,5 @@ cv2.destroyAllWindows()
 average_time_per_frame = total_time / frame_count if frame_count > 0 else 0
 print(f"Processed {frame_count} frames in {total_time:.2f} seconds.")
 print(f"Average time per frame: {average_time_per_frame:.3f} seconds ({1/average_time_per_frame:.2f} FPS)")
+
+print(f"Output video saved at {output_video_path}")

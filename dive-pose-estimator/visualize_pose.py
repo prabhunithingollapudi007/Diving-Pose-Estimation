@@ -6,9 +6,10 @@ import cv2
 import time
 
 # Input json and video paths
-file_path = "../data/pose-estimated/Jana/results_Jana_segmented.json"
-input_video_path = '../data/preprocessed/Jana_rotated.mp4'
-output_video_path = "../data/Jana_side_by_side.mp4"
+file_path = "../data/pose-estimated/two-person-sync_rotated/results_two-person-sync_rotated_segmented.json"
+input_video_path = '../data/preprocessed/two-person-sync_rotated.mp4'
+segmented_video_path = '../data/segmented/two-person-sync_rotated_segmented.mp4'
+output_video_path = "../data/two-person-sync_rotated_side_by_side.mp4"
 
 # Load JSON file
 with open(file_path, 'r') as f:
@@ -41,13 +42,13 @@ print(f"Number of frames: {num_frames}")
 # Video settings
 cap = cv2.VideoCapture(input_video_path)
 # fps = int(cap.get(cv2.CAP_PROP_FPS))
-fps = 25 # mmpose saves at 25 fps
+fps = 30
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 cap.release()
 
 # Create a VideoWriter for the output
-output_width = frame_width * 2  # Side-by-side layout
+output_width = frame_width * 3  # Side-by-side layout
 output_height = frame_height
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 out = cv2.VideoWriter(output_video_path, fourcc, fps, (output_width, output_height))
@@ -80,6 +81,7 @@ skeleton_links = meta_info["skeleton_links"]
 
 # Open input video
 cap = cv2.VideoCapture(input_video_path)
+segmented_cap = cv2.VideoCapture(segmented_video_path)
 frame_idx = 0
 
 # Initialize timing variables
@@ -87,8 +89,9 @@ frame_count = 0
 total_time = 0
 
 # Loop through frames
-while cap.isOpened():
+while cap.isOpened() and segmented_cap.isOpened():
     ret, original_frame = cap.read()
+    ret_segmented, segmented_frame = segmented_cap.read()
     if not ret:
         break
 
@@ -119,7 +122,7 @@ while cap.isOpened():
 
 
     # Concatenate the original frame and pose visualization side by side
-    combined_frame = np.hstack((original_frame, pose_frame))
+    combined_frame = np.hstack((original_frame, segmented_frame, pose_frame))
 
     # Write the combined frame to the output video
     out.write(combined_frame)

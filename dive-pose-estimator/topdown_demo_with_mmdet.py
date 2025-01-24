@@ -82,13 +82,23 @@ def main():
     Using mmdet to detect the human.
     """
 
-    input_file = "../../data/segmented/Jana_segmented.mp4"
-    output_root = "../../data/pose-estimated/Jana"
+    input_file = "../../data/segmented/two-person-sync_rotated_segmented.mp4"
+    output_root = "../../data/pose-estimated/two-person-sync_rotated"
     save_predictions = True
-    det_config = "demo/mmdetection_cfg/rtmdet_m_640-8xb32_coco-person.py"
-    det_checkpoint = "https://download.openmmlab.com/mmpose/v1/projects/rtmpose/rtmdet_m_8xb32-100e_coco-obj365-person-235e8209.pth"
-    pose_config = "configs/body_2d_keypoint/rtmpose/body8/rtmpose-m_8xb256-420e_body8-256x192.py"
-    pose_checkpoint = "https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-body7_pt-body7_420e-256x192-e48f03d0_20230504.pth"
+
+    # det_config = "demo/mmdetection_cfg/rtmdet_m_640-8xb32_coco-person.py"
+    # det_checkpoint = "https://download.openmmlab.com/mmpose/v1/projects/rtmpose/rtmdet_m_8xb32-100e_coco-obj365-person-235e8209.pth"
+
+    det_config = "demo/mmdetection_cfg/rtmdet_nano_320-8xb32_coco-person.py"
+    det_checkpoint = "https://download.openmmlab.com/mmpose/v1/projects/rtmpose/rtmdet_nano_8xb32-100e_coco-obj365-person-05d8511e.pth"
+
+
+    # pose_config = "configs/body_2d_keypoint/topdown_heatmap/crowdpose/td-hm_res101_8xb64-210e_crowdpose-320x256.py"
+    # pose_checkpoint = "https://download.openmmlab.com/mmpose/top_down/resnet/res101_crowdpose_320x256-c88c512a_20201227.pth"
+
+
+    pose_config = "configs/body_2d_keypoint/rtmpose/body8/rtmpose-m_8xb256-420e_body8-384x288.py"
+    pose_checkpoint = "https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-body7_pt-body7_420e-384x288-65e718c4_20230504.pth"
 
     parser = ArgumentParser()
     parser.add_argument('--det_config', help='Config file for detection', default=det_config)
@@ -145,7 +155,7 @@ def main():
         help='Whether to show the index of keypoints')
     parser.add_argument(
         '--skeleton-style',
-        default='openpose',
+        default='mmpose',
         type=str,
         choices=['mmpose', 'openpose'],
         help='Skeleton style selection')

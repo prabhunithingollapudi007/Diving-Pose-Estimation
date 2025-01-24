@@ -227,3 +227,103 @@ vii) crowdpose/rtmpose-m_8xb64-210e_crowdpose-256x192.py + rtm det nano
 
 Processed 961 frames in 136.81 seconds.
 Average time per frame: 0.142 seconds (7.02 FPS)
+
+viii) simcc/coco/simcc_res50_8xb32-140e_coco-384x288.py + rtm det nano
+
+Processed 961 frames in 391.41 seconds.
+Average time per frame: 0.407 seconds (2.46 FPS)
+
+ix) topdown_heatmap/crowdpose/td-hm_hrnet-w32_8xb64-210e_crowdpose-256x192.py + rtm det nano
+
+Processed 961 frames in 212.08 seconds.
+Average time per frame: 0.221 seconds (4.53 FPS)
+
+x) crowdpose/td-hm_res101_8xb64-210e_crowdpose-320x256.py + rtm det nano
+
+Processed 961 frames in 218.26 seconds.
+Average time per frame: 0.227 seconds (4.40 FPS)
+
+
+Final choices 
+
+Elena_rotated.mp4 ================================
+
+i) RVM for segmentation + RTM Det Nano (rtmdet_nano_320-8xb32_coco-person)  + RTM Pose (rtmpose-m_8xb256-420e_body8-384x288)
+
+Processed 1064 frames in 137.54 seconds.
+Average time per frame: 0.129 seconds (7.74 FPS)
+
++
+
+Processed 1064 frames in 200.56 seconds.
+Average time per frame: 0.188 seconds (5.31 FPS)
+
+comments: Bad results during stationary poses.
+
+ii) Mediapipe for segmentation + RTM Det Nano (rtmdet_nano_320-8xb32_coco-person)  + RTM Pose (rtmpose-m_8xb256-420e_body8-384x288)
+
+Processed 1064 frames in 41.61 seconds.
+Average time per frame: 0.039 seconds (25.57 FPS)
+
++ 
+
+Processed 1064 frames in 116.04 seconds.
+Average time per frame: 0.109 seconds (9.17 FPS)
+
+comments: Very bad results during stationary poses.
+
+
+
+Lou_rotated.mp4 ================================
+
+i) RVM for segmentation + RTM Det Nano (rtmdet_nano_320-8xb32_coco-person)  + RTM Pose (rtmpose-m_8xb256-420e_body8-384x288)
+
+Processed 1010 frames in 134.57 seconds.
+Average time per frame: 0.133 seconds (7.51 FPS)
+
++
+
+Processed 1010 frames in 190.58 seconds.
+Average time per frame: 0.189 seconds (5.30 FPS)
+
+comments: bad results during twisting poses.
+
+ii) Mediapipe for segmentation + RTM Det Nano (rtmdet_nano_320-8xb32_coco-person)  + RTM Pose (rtmpose-m_8xb256-420e_body8-384x288)
+
+Average time per frame: 0.041 seconds (24.42 FPS)
+Output video saved at ../data/segmented/Lou_segmented.mp4
+
++
+
+Processed 1010 frames in 148.40 seconds.
+Average time per frame: 0.147 seconds (6.81 FPS)
+
+
+comments: bad results during twisting poses.
+
+two-person-sync_rotated.mp4 ================================
+
+i) RVM for segmentation + RTM Det Nano (rtmdet_nano_320-8xb32_coco-person)  + RTM Pose (rtmpose-m_8xb256-420e_body8-384x288)
+
+Processed 1328 frames in 171.00 seconds.
+Average time per frame: 0.129 seconds (7.77 FPS)
+
++
+
+Processed 1328 frames in 153.15 seconds.
+Average time per frame: 0.115 seconds (8.67 FPS)
+
+comments: twisting poses are detected but only for one person
+
+ii) Mediapipe for segmentation + RTM Det Nano (rtmdet_nano_320-8xb32_coco-person)  + RTM Pose (rtmpose-m_8xb256-420e_body8-384x288)
+
+Processed 1328 frames in 53.93 seconds.
+Average time per frame: 0.041 seconds (24.62 FPS)
+
++
+
+Processed 1328 frames in 153.06 seconds.
+Average time per frame: 0.115 seconds (8.68 FPS)
+
+
+comments: twisting poses are detected but only for one person
