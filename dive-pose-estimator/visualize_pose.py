@@ -5,12 +5,14 @@ import numpy as np
 import cv2
 import time
 from filter_keypoints import KeypointFilter
+from joint_angles import process_pose_angles
 
 # Input paths
 file_path = "data/pose-estimated/Jana/results_Jana_segmented.json"
 input_video_path = 'data/preprocessed/Jana_rotated.mp4'
 segmented_video_path = 'data/segmented/Jana_segmented.mp4'
 output_video_path = "data/Jana_side_by_side.mp4"
+filtering = False
 
 # Load JSON file
 with open(file_path, 'r') as f:
@@ -84,8 +86,6 @@ while cap.isOpened() and segmented_cap.isOpened():
     # Create a blank canvas for the pose visualization
     pose_frame = np.zeros((frame_height, frame_width, 3), np.uint8)
 
-    filtered_frame = np.zeros((frame_height, frame_width, 3), np.uint8)
-
     # Process keypoints for the current frame
     if frame_idx < len(instance_info):
         frame = instance_info[frame_idx]
@@ -97,7 +97,8 @@ while cap.isOpened() and segmented_cap.isOpened():
             bbox = instance["bbox"]
 
             # Filter keypoints
-            filtered_keypoints = keypoint_filter.filter_keypoints(instance_id, keypoints)
+            if filtering:
+                keypoints = keypoint_filter.filter_keypoints(instance_id, keypoints)
 
             # Draw keypoints
             for i, keypoint in enumerate(keypoints):
@@ -116,22 +117,13 @@ while cap.isOpened() and segmented_cap.isOpened():
                 for box in bbox:
                     x1, y1, x2, y2 = box
                     cv2.rectangle(pose_frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-                    cv2.rectangle(filtered_frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
 
-            # Draw filtered keypoints on filtered frame
-            for i, keypoint in enumerate(filtered_keypoints):
-                x, y = keypoint
-                cv2.circle(filtered_frame, (int(x), int(y)), 5, colors[i], -1)
-
-            # Draw skeleton for filtered keypoints
-            for start_idx, end_idx in skeleton_links:
-                if all(filtered_keypoints[start_idx]) and all(filtered_keypoints[end_idx]):
-                    start_point = (int(filtered_keypoints[start_idx][0]), int(filtered_keypoints[start_idx][1]))
-                    end_point = (int(filtered_keypoints[end_idx][0]), int(filtered_keypoints[end_idx][1]))
-                    cv2.line(filtered_frame, start_point, end_point, colors[start_idx], 2)
+            pose_frame = process_pose_angles(pose_frame, keypoints)
+            # Only process the first instance for now
+            break
 
     # Concatenate original, segmented, and pose visualization
-    combined_frame = np.hstack((original_frame, pose_frame, filtered_frame))
+    combined_frame = np.hstack((original_frame, segmented_frame, pose_frame))
 
     # Write output frame
     out.write(combined_frame)

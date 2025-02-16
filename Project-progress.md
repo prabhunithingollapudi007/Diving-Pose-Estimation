@@ -332,4 +332,4 @@ comments: twisting poses are detected but only for one person
 
 16 Feb 2025
 
-Visualize pose - add bounding boxes, aspect ratio fix, side by side view
+Visualize pose - add bounding boxes, aspect ratio fix, side by side view, filtering, angles
