@@ -327,3 +327,9 @@ Average time per frame: 0.115 seconds (8.68 FPS)
 
 
 comments: twisting poses are detected but only for one person
+
+
+
+16 Feb 2025
+
+Visualize pose - add bounding boxes, aspect ratio fix, side by side view

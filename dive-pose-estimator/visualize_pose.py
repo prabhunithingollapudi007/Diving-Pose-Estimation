@@ -6,10 +6,10 @@ import cv2
 import time
 
 # Input json and video paths
-file_path = "../data/pose-estimated/two-person-sync_rotated/results_two-person-sync_rotated_segmented.json"
-input_video_path = '../data/preprocessed/two-person-sync_rotated.mp4'
-segmented_video_path = '../data/segmented/two-person-sync_rotated_segmented.mp4'
-output_video_path = "../data/two-person-sync_rotated_side_by_side.mp4"
+file_path = "../data/pose-estimated/Jana/results_Jana_segmented.json"
+input_video_path = '../data/preprocessed/Jana_rotated.mp4'
+segmented_video_path = '../data/segmented/Jana_segmented.mp4'
+output_video_path = "../data/Jana_side_by_side.mp4"
 
 # Load JSON file
 with open(file_path, 'r') as f:
@@ -20,22 +20,23 @@ meta_info = data["meta_info"]
 instance_info = data["instance_info"]
 
 # Collect all keypoints across frames
-all_keypoints = []
+all_frames = []
 
 for frame in instance_info:
     instances = frame["instances"]
     if instances:  # Ensure there are keypoints
         keypoints = [np.array(inst["keypoints"]) for inst in instances]
+        bbox = [np.array(inst["bbox"][0]) for inst in instances]
         if len(keypoints) != 0:
-            all_keypoints.append(keypoints)
+            all_frames.append({'keypoints': keypoints, 'bbox': bbox})
         else:
-            all_keypoints.append([])
+            all_frames.append({'keypoints': [], 'bbox': bbox})
     else:
-        all_keypoints.append([])
+        all_frames.append({'keypoints': [], 'bbox': []})
 
 # Print the number of frames and instances
-num_frames = len(all_keypoints)
-num_instances = len(all_keypoints[0])
+num_frames = len(all_frames)
+num_instances = len(all_frames[0])
 
 print(f"Number of frames: {num_frames}")
 
@@ -102,8 +103,10 @@ while cap.isOpened() and segmented_cap.isOpened():
     pose_frame = np.zeros((frame_height, frame_width, 3), np.uint8)
 
     # Get keypoints for the current frame
-    if frame_idx < len(all_keypoints):
-        keypoints = all_keypoints[frame_idx]
+    if frame_idx < len(all_frames):
+        frame = all_frames[frame_idx]
+        keypoints = frame['keypoints']
+        bbox = frame['bbox']
 
         if len(keypoints) != 0:
             # Draw keypoints and skeleton on pose_frame
@@ -120,6 +123,11 @@ while cap.isOpened() and segmented_cap.isOpened():
                     end_point = (int(instance_keypoints[end_idx][0]), int(instance_keypoints[end_idx][1]))
                     cv2.line(pose_frame, start_point, end_point, colors[start_idx], 2)
 
+        if len(bbox) != 0:
+            # Draw bounding boxes on the original frame
+            for box in bbox:
+                x, y, w, h = box
+                cv2.rectangle(pose_frame, (int(x), int(y)), (int(x + w), int(y + h)), (0, 255, 0), 2)
 
     # Concatenate the original frame and pose visualization side by side
     combined_frame = np.hstack((original_frame, segmented_frame, pose_frame))
