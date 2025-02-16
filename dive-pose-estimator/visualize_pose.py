@@ -5,6 +5,8 @@ import numpy as np
 import cv2
 import time
 
+from filter_keypoints import moving_average_filter
+
 # Input json and video paths
 file_path = "../data/pose-estimated/Jana/results_Jana_segmented.json"
 input_video_path = '../data/preprocessed/Jana_rotated.mp4'
@@ -21,18 +23,27 @@ instance_info = data["instance_info"]
 
 # Collect all keypoints across frames
 all_frames = []
+raw_keypoints = []
 
 for frame in instance_info:
     instances = frame["instances"]
     if instances:  # Ensure there are keypoints
         keypoints = [np.array(inst["keypoints"]) for inst in instances]
         bbox = [np.array(inst["bbox"][0]) for inst in instances]
-        if len(keypoints) != 0:
-            all_frames.append({'keypoints': keypoints, 'bbox': bbox})
-        else:
-            all_frames.append({'keypoints': [], 'bbox': bbox})
+        raw_keypoints.append(keypoints if len(keypoints) != 0 else [])
+        all_frames.append({'keypoints': keypoints, 'bbox': bbox})
     else:
         all_frames.append({'keypoints': [], 'bbox': []})
+
+""" 
+# Apply smoothing filters to keypoints
+smoothed_keypoints = moving_average_filter(raw_keypoints, window_size=5)
+
+
+# Replace raw keypoints with smoothed keypoints
+for i, frame in enumerate(all_frames):
+    frame['smoothed_keypoints'] = smoothed_keypoints[i]
+ """
 
 # Print the number of frames and instances
 num_frames = len(all_frames)
@@ -42,7 +53,6 @@ print(f"Number of frames: {num_frames}")
 
 # Video settings
 cap = cv2.VideoCapture(input_video_path)
-# fps = int(cap.get(cv2.CAP_PROP_FPS))
 fps = 30
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -101,12 +111,14 @@ while cap.isOpened() and segmented_cap.isOpened():
 
     # Create a blank canvas for the pose visualization
     pose_frame = np.zeros((frame_height, frame_width, 3), np.uint8)
+    smoothed_frame = np.zeros((frame_height, frame_width, 3), np.uint8)
 
     # Get keypoints for the current frame
     if frame_idx < len(all_frames):
         frame = all_frames[frame_idx]
         keypoints = frame['keypoints']
         bbox = frame['bbox']
+        # smoothed_keypoints = frame['smoothed_keypoints']
 
         if len(keypoints) != 0:
             # Draw keypoints and skeleton on pose_frame
@@ -123,14 +135,29 @@ while cap.isOpened() and segmented_cap.isOpened():
                     end_point = (int(instance_keypoints[end_idx][0]), int(instance_keypoints[end_idx][1]))
                     cv2.line(pose_frame, start_point, end_point, colors[start_idx], 2)
 
+        """ if len(smoothed_keypoints) != 0:
+            # Draw keypoints and skeleton on smoothed_frame
+            for instance_keypoints in smoothed_keypoints:
+                for i, keypoint in enumerate(instance_keypoints):
+                    x, y = keypoint  # Assuming keypoints are [x, y, visibility]
+                    cv2.circle(smoothed_frame, (int(x), int(y)), 5, colors[i], -1)
+
+            # Draw the skeleton connections
+            for connection in skeleton_links:
+                start_idx, end_idx = connection
+                if all(instance_keypoints[start_idx]) and all(instance_keypoints[end_idx]):
+                    start_point = (int(instance_keypoints[start_idx][0]), int(instance_keypoints[start_idx][1]))
+                    end_point = (int(instance_keypoints[end_idx][0]), int(instance_keypoints[end_idx][1]))
+                    cv2.line(smoothed_frame, start_point, end_point, colors[start_idx], 2) """
+
         if len(bbox) != 0:
             # Draw bounding boxes on the original frame
             for box in bbox:
-                x, y, w, h = box
-                cv2.rectangle(pose_frame, (int(x), int(y)), (int(x + w), int(y + h)), (0, 255, 0), 2)
+                x1, y1, x2, y2 = box
+                cv2.rectangle(pose_frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
 
     # Concatenate the original frame and pose visualization side by side
-    combined_frame = np.hstack((original_frame, segmented_frame, pose_frame))
+    combined_frame = np.hstack((original_frame, pose_frame, smoothed_frame))
 
     # Write the combined frame to the output video
     out.write(combined_frame)
