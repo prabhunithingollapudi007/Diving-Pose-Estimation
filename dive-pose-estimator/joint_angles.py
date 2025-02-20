@@ -19,8 +19,14 @@ def calculate_angle(a, b, c):
     if mag_ab == 0 or mag_bc == 0:
         return 0.0
 
+    # Compute cosine of the angle
+    cos_theta = dot_product / (mag_ab * mag_bc)
+    
+    # Ensure the cosine value is within the valid range [-1, 1]
+    cos_theta = np.clip(cos_theta, -1.0, 1.0)
+
     # Compute angle (in degrees)
-    theta = np.arccos(dot_product / (mag_ab * mag_bc))
+    theta = np.arccos(cos_theta)
     return np.degrees(theta)
 
 def put_text(frame, angle, joint, position_x, position_y):

@@ -8,8 +8,8 @@ mp_selfie_segmentation = mp.solutions.selfie_segmentation
 selfie_segmentation = mp_selfie_segmentation.SelfieSegmentation(model_selection=1)
 
 # Input and output video paths
-input_video_path = "../data/preprocessed/two-person-sync_rotated.mp4"
-output_video_path = "../data/segmented/two-person-sync_rotated_segmented.mp4"
+input_video_path = "../data/preprocessed/Jana_rotated.mp4"
+output_video_path = "../data/segmented/Jana_segmented.mp4"
 
 # Open the input video
 cap = cv2.VideoCapture(input_video_path)
@@ -52,8 +52,16 @@ while cap.isOpened():
     mask = results.segmentation_mask
     mask = (mask > 0.2).astype(np.uint8) * 255  # Binary mask
 
-    # Dilate the mask to remove noise
-    kernel = np.ones((200, 200), np.uint8)
+    # Find the largest connected component (assuming it's the main diver)
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
+    
+    if num_labels > 1:
+        # Get the index of the largest component (excluding background)
+        largest_label = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
+        mask = np.uint8(labels == largest_label) * 255
+
+    # Dilate the mask to remove small holes
+    kernel = np.ones((250, 250), np.uint8) # Large kernel to dilate the mask
     mask = cv2.dilate(mask, kernel, iterations=1)
 
     # Apply the mask to the frame

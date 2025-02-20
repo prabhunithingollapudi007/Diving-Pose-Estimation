@@ -1,22 +1,17 @@
 
 # Copyright (c) OpenMMLab. All rights reserved.
-import logging
-import mimetypes
 import os
 import time
 from argparse import ArgumentParser
 
 import cv2
 import json_tricks as json
-import mmcv
 import mmengine
 import numpy as np
-from mmengine.logging import print_log
 
 from mmpose.apis import inference_topdown
 from mmpose.apis import init_model as init_pose_estimator
 from mmpose.evaluation.functional import nms
-from mmpose.registry import VISUALIZERS
 from mmpose.structures import merge_data_samples, split_instances
 from mmpose.utils import adapt_mmdet_pipeline
 
@@ -27,12 +22,9 @@ except (ImportError, ModuleNotFoundError):
     has_mmdet = False
 
 
-def process_one_image(args,
-                      img,
+def process_one_image(img,
                       detector,
-                      pose_estimator,
-                      visualizer=None,
-                      show_interval=0):
+                      pose_estimator, det_cat_id=0, bbox_thr=0.2, nms_thr=0.4):
     """Visualize predicted keypoints (and heatmaps) of one image."""
 
     # predict bbox
@@ -40,9 +32,9 @@ def process_one_image(args,
     pred_instance = det_result.pred_instances.cpu().numpy()
     bboxes = np.concatenate(
         (pred_instance.bboxes, pred_instance.scores[:, None]), axis=1)
-    bboxes = bboxes[np.logical_and(pred_instance.labels == args.det_cat_id,
-                                   pred_instance.scores > args.bbox_thr)]
-    bboxes = bboxes[nms(bboxes, args.nms_thr), :4]
+    bboxes = bboxes[np.logical_and(pred_instance.labels == det_cat_id,
+                                   pred_instance.scores > bbox_thr)]
+    bboxes = bboxes[nms(bboxes, nms_thr), :4]
 
     if len(bboxes) == 0:
         pose_results = []
@@ -51,40 +43,17 @@ def process_one_image(args,
         pose_results = inference_topdown(pose_estimator, img, bboxes)
     data_samples = merge_data_samples(pose_results)
 
-    # show the results
-    if isinstance(img, str):
-        img = mmcv.imread(img, channel_order='rgb')
-    elif isinstance(img, np.ndarray):
-        img = mmcv.bgr2rgb(img)
-
-    if visualizer is not None:
-        visualizer.add_datasample(
-            'result',
-            img,
-            data_sample=data_samples,
-            draw_gt=False,
-            draw_heatmap=args.draw_heatmap,
-            draw_bbox=args.draw_bbox,
-            show_kpt_idx=args.show_kpt_idx,
-            skeleton_style=args.skeleton_style,
-            show=args.show,
-            wait_time=show_interval,
-            kpt_thr=args.kpt_thr)
-
-    # if there is no instance detected, return None
     return data_samples.get('pred_instances', None)
 
 
 def main():
-    """Visualize the demo images.
 
-    
-    Using mmdet to detect the human.
-    """
-
-    input_file = "../../data/segmented/two-person-sync_rotated_segmented.mp4"
-    output_root = "../../data/pose-estimated/two-person-sync_rotated"
-    save_predictions = True
+    input_file = "../../data/segmented/Jana_segmented.mp4"
+    output_root = "../../data/pose-estimated/Jana"
+    device = 'cpu'
+    det_cat_id = 0
+    bbox_thr = 0.2
+    nms_thr = 0.4
 
     # det_config = "demo/mmdetection_cfg/rtmdet_m_640-8xb32_coco-person.py"
     # det_checkpoint = "https://download.openmmlab.com/mmpose/v1/projects/rtmpose/rtmdet_m_8xb32-100e_coco-obj365-person-235e8209.pth"
@@ -96,107 +65,16 @@ def main():
     # pose_config = "configs/body_2d_keypoint/topdown_heatmap/crowdpose/td-hm_res101_8xb64-210e_crowdpose-320x256.py"
     # pose_checkpoint = "https://download.openmmlab.com/mmpose/top_down/resnet/res101_crowdpose_320x256-c88c512a_20201227.pth"
 
+    # pose_config = "configs/body_2d_keypoint/rtmpose/body8/rtmpose-m_8xb256-420e_body8-384x288.py"
+    # pose_checkpoint = "https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-body7_pt-body7_420e-384x288-65e718c4_20230504.pth"
 
-    pose_config = "configs/body_2d_keypoint/rtmpose/body8/rtmpose-m_8xb256-420e_body8-384x288.py"
-    pose_checkpoint = "https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-body7_pt-body7_420e-384x288-65e718c4_20230504.pth"
+    pose_config = "configs/body_2d_keypoint/rtmpose/body8/rtmpose-m_8xb256-420e_body8-256x192.py"
+    pose_checkpoint = "https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-body7_pt-body7_420e-256x192-e48f03d0_20230504.pth"
 
-    parser = ArgumentParser()
-    parser.add_argument('--det_config', help='Config file for detection', default=det_config)
-    parser.add_argument('--det_checkpoint', help='Checkpoint file for detection', default=det_checkpoint)
-    parser.add_argument('--pose_config', help='Config file for pose', default=pose_config)
-    parser.add_argument('--pose_checkpoint', help='Checkpoint file for pose', default=pose_checkpoint)
-    parser.add_argument(
-        '--input', type=str, help='Image/Video file', default=input_file)
-    parser.add_argument(
-        '--show',
-        action='store_true',
-        default=False,
-        help='whether to show img')
-    parser.add_argument(
-        '--output-root',
-        type=str,
-        help='root of the output img file. '
-        'Default not saving the visualization images.', default=output_root)
-    parser.add_argument(
-        '--save-predictions',
-        action='store_true',
-        help='whether to save predicted results', default=save_predictions)
-    parser.add_argument(
-        '--device', default='cpu', help='Device used for inference')
-    parser.add_argument(
-        '--det-cat-id',
-        type=int,
-        default=0,
-        help='Category id for bounding box detection model')
-    parser.add_argument(
-        '--bbox-thr',
-        type=float,
-        default=0.3,
-        help='Bounding box score threshold')
-    parser.add_argument(
-        '--nms-thr',
-        type=float,
-        default=0.3,
-        help='IoU threshold for bounding box NMS')
-    parser.add_argument(
-        '--kpt-thr',
-        type=float,
-        default=0.3,
-        help='Visualizing keypoint thresholds')
-    parser.add_argument(
-        '--draw-heatmap',
-        action='store_true',
-        default=False,
-        help='Draw heatmap predicted by the model')
-    parser.add_argument(
-        '--show-kpt-idx',
-        action='store_true',
-        default=False,
-        help='Whether to show the index of keypoints')
-    parser.add_argument(
-        '--skeleton-style',
-        default='mmpose',
-        type=str,
-        choices=['mmpose', 'openpose'],
-        help='Skeleton style selection')
-    parser.add_argument(
-        '--radius',
-        type=int,
-        default=3,
-        help='Keypoint radius for visualization')
-    parser.add_argument(
-        '--thickness',
-        type=int,
-        default=1,
-        help='Link thickness for visualization')
-    parser.add_argument(
-        '--show-interval', type=int, default=0, help='Sleep seconds per frame')
-    parser.add_argument(
-        '--alpha', type=float, default=0.8, help='The transparency of bboxes')
-    parser.add_argument(
-        '--draw-bbox', action='store_true', help='Draw bboxes of instances')
 
-    assert has_mmdet, 'Please install mmdet to run the demo.'
-
-    args = parser.parse_args()
-
-    assert args.show or (args.output_root != '')
-    assert args.input != ''
-    assert args.det_config is not None
-    assert args.det_checkpoint is not None
-
-    output_file = None
-    if args.output_root:
-        mmengine.mkdir_or_exist(args.output_root)
-        output_file = os.path.join(args.output_root,
-                                   os.path.basename(args.input))
-        if args.input == 'webcam':
-            output_file += '.mp4'
-
-    if args.save_predictions:
-        assert args.output_root != ''
-        args.pred_save_path = f'{args.output_root}/results_' \
-            f'{os.path.splitext(os.path.basename(args.input))[0]}.json'
+    mmengine.mkdir_or_exist(output_root)
+    pred_save_path = f'{output_root}/results_' \
+            f'{os.path.splitext(os.path.basename(input_file))[0]}.json'
 
     # Initialize timing variables
     frame_count = 0
@@ -204,141 +82,66 @@ def main():
 
     # build detector
     detector = init_detector(
-        args.det_config, args.det_checkpoint, device=args.device)
+        det_config, det_checkpoint, device=device)
     detector.cfg = adapt_mmdet_pipeline(detector.cfg)
 
     # build pose estimator
     pose_estimator = init_pose_estimator(
-        args.pose_config,
-        args.pose_checkpoint,
-        device=args.device,
+        pose_config,
+        pose_checkpoint,
+        device=device,
         cfg_options=dict(
-            model=dict(test_cfg=dict(output_heatmaps=args.draw_heatmap))))
+            model=dict(test_cfg=dict(output_heatmaps=False))))
 
-    # build visualizer
-    pose_estimator.cfg.visualizer.radius = args.radius
-    pose_estimator.cfg.visualizer.alpha = args.alpha
-    pose_estimator.cfg.visualizer.line_width = args.thickness
-    visualizer = VISUALIZERS.build(pose_estimator.cfg.visualizer)
-    # the dataset_meta is loaded from the checkpoint and
-    # then pass to the model in init_pose_estimator
-    visualizer.set_dataset_meta(
-        pose_estimator.dataset_meta, skeleton_style=args.skeleton_style)
+    cap = cv2.VideoCapture(input_file)
+    original_fps = cap.get(cv2.CAP_PROP_FPS)
 
-    if args.input == 'webcam':
-        input_type = 'webcam'
-    else:
-        input_type = mimetypes.guess_type(args.input)[0].split('/')[0]
+    processing_fps = 30
 
-    if input_type == 'image':
+    pred_instances_list = []
 
-        # inference
-        pred_instances = process_one_image(args, args.input, detector,
-                                           pose_estimator, visualizer)
+    print("Original FPS: ", original_fps)
+    print("Processing FPS: ", processing_fps)
 
-        if args.save_predictions:
-            pred_instances_list = split_instances(pred_instances)
+    while cap.isOpened():
+        success, frame = cap.read()
 
-        if output_file:
-            img_vis = visualizer.get_image()
-            mmcv.imwrite(mmcv.rgb2bgr(img_vis), output_file)
+        # Start time for this frame
+        start_time = time.time()
 
-    elif input_type in ['webcam', 'video']:
+        if not success:
+            break
 
-        if args.input == 'webcam':
-            cap = cv2.VideoCapture(0)
-        else:
-            cap = cv2.VideoCapture(args.input)
-            original_fps = cap.get(cv2.CAP_PROP_FPS)
+        # topdown pose estimation
+        pred_instances = process_one_image(frame, detector,
+                                            pose_estimator, det_cat_id, bbox_thr, nms_thr)
 
-        processing_fps = 30
+        # save prediction results
+        pred_instances_list.append(
+            dict(
+                frame_id=frame_count,
+                instances=split_instances(pred_instances) if pred_instances else []))
 
-        video_writer = None
-        pred_instances_list = []
+        # Calculate processing time for this frame
+        frame_time = time.time() - start_time
+        total_time += frame_time
+        frame_count += 1
 
-        print("Original FPS: ", original_fps)
-        print("Processing FPS: ", processing_fps)
+        # Print progress
+        if frame_count % 100 == 0:
+            print(f"Processed {frame_count} frames")
 
-        while cap.isOpened():
-            success, frame = cap.read()
+    cap.release()
 
-            # Start time for this frame
-            start_time = time.time()
-    
-            if not success:
-                break
+    with open(pred_save_path, 'w') as f:
+        json.dump(
+            dict(
+                meta_info=pose_estimator.dataset_meta,
+                instance_info=pred_instances_list),
+            f,
+            indent='\t')
+    print(f'predictions have been saved at {pred_save_path}')
 
-
-            # topdown pose estimation
-            pred_instances = process_one_image(args, frame, detector,
-                                               pose_estimator, visualizer,
-                                               0.001)
-
-            if args.save_predictions:
-                # save prediction results
-                pred_instances_list.append(
-                    dict(
-                        frame_id=frame_count,
-                        instances=split_instances(pred_instances) if pred_instances else []))
-
-            # output videos
-            if output_file:
-                frame_vis = visualizer.get_image()
-
-                if video_writer is None:
-                    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-                    # the size of the image with visualization may vary
-                    # depending on the presence of heatmaps
-                    video_writer = cv2.VideoWriter(
-                        output_file,
-                        fourcc,
-                        30,  # saved fps
-                        (frame_vis.shape[1], frame_vis.shape[0]))
-
-                video_writer.write(mmcv.rgb2bgr(frame_vis))
-
-            if args.show:
-                # press ESC to exit
-                if cv2.waitKey(5) & 0xFF == 27:
-                    break
-
-                time.sleep(args.show_interval)
-
-            # Calculate processing time for this frame
-            frame_time = time.time() - start_time
-            total_time += frame_time
-            frame_count += 1
-
-            # Print progress
-            if frame_count % 100 == 0:
-                print(f"Processed {frame_count} frames")
-
-        if video_writer:
-            video_writer.release()
-
-        cap.release()
-
-    else:
-        args.save_predictions = False
-        raise ValueError(
-            f'file {os.path.basename(args.input)} has invalid format.')
-
-    if args.save_predictions:
-        with open(args.pred_save_path, 'w') as f:
-            json.dump(
-                dict(
-                    meta_info=pose_estimator.dataset_meta,
-                    instance_info=pred_instances_list),
-                f,
-                indent='\t')
-        print(f'predictions have been saved at {args.pred_save_path}')
-
-    if output_file:
-        input_type = input_type.replace('webcam', 'video')
-        print_log(
-            f'the output {input_type} has been saved at {output_file}',
-            logger='current',
-            level=logging.INFO)
     # Print overall stats
     average_time_per_frame = total_time / frame_count if frame_count > 0 else 0
     print(f"Processed {frame_count} frames in {total_time:.2f} seconds.")
