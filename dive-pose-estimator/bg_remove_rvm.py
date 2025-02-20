@@ -13,8 +13,9 @@ print(f"Using device: {device}")
 model = model.to(device).eval()
 
 # Input and output video paths
-input_video_path = "../../data/preprocessed/two-person-sync_rotated.mp4"
-output_video_path = "two-person-sync_rotated_rvm.mp4"
+base_name = "Elena"
+input_video_path = f"../../data/preprocessed/{base_name}_rotated.mp4"
+output_video_path = f"../../data/segmented/{base_name}_segmented.mp4"
 
 # Open input video
 cap = cv2.VideoCapture(input_video_path)
@@ -59,8 +60,16 @@ while cap.isOpened():
     pha = pha[0][0].cpu().numpy()
     mask = (pha * 255).astype(np.uint8)
 
-    # DIlate the mask to remove noise
-    kernel = np.ones((150, 150), np.uint8)
+    # Find the largest connected component (assumed to be the diver)
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
+
+    if num_labels > 1:
+        # Get the largest non-background component
+        largest_label = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
+        mask = np.uint8(labels == largest_label) * 255
+
+    # Dilate the mask to remove small holes
+    kernel = np.ones((100, 100), np.uint8)  # Adjusted kernel size for better precision
     mask = cv2.dilate(mask, kernel, iterations=1)
 
     # Apply the mask to the original frame
