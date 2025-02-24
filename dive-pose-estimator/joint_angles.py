@@ -64,10 +64,13 @@ def process_pose_angles(pose_frame, keypoints):
     text_x = pose_frame.shape[1] - 200  # Right side
     text_y = 30
 
+    angles = {}
+
     # Calculate and draw angles
     for joint, (A, B, C) in joints.items():
         angle = calculate_angle(A, B, C)
+        angles[joint] = angle
         put_text(pose_frame, angle, joint, text_x, text_y)
         text_y += 30
 
-    return pose_frame
+    return pose_frame, angles

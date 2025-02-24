@@ -333,3 +333,16 @@ comments: twisting poses are detected but only for one person
 16 Feb 2025
 
 Visualize pose - add bounding boxes, aspect ratio fix, side by side view, filtering, angles
+
+
+20 Feb 2025
+
+Questions to ask:
+1. Help the model by specifying the number of divers in the video
+2. Use a different model if not satisfied with the results
+3. 
+
+Current Problems:
+1. Cannot detect poses when there's a twist in the pose (no smooth transition)
+2. Cannot detect poses when there's too many people in the video
+3. Cannot detect poses when the person is too far away from the camera

@@ -7,12 +7,19 @@ import time
 from filter_keypoints import KeypointFilter
 from joint_angles import process_pose_angles
 from utils import draw_keypoints
+from argparse import ArgumentParser
+import matplotlib.pyplot as plt
+
 
 # Input paths
-file_path = "data/pose-estimated/Jana/results_Jana_segmented.json"
-input_video_path = 'data/preprocessed/Jana_rotated.mp4'
-segmented_video_path = 'data/segmented/Jana_segmented.mp4'
-output_video_path = "data/Jana_side_by_side.mp4"
+parser = ArgumentParser()
+parser.add_argument("--base_name", type=str, required=True, help="Base name of the video file")
+base_name = parser.parse_args().base_name
+
+file_path = f"data/pose-estimated/{base_name}/results_{base_name}_segmented.json"
+input_video_path = f'data/preprocessed/{base_name}_rotated.mp4'
+segmented_video_path = f'data/segmented/{base_name}_segmented.mp4'
+output_video_path = f"data/{base_name}_side_by_side.mp4"
 filtering = False
 
 # Load JSON file
@@ -74,6 +81,8 @@ frame_idx = 0
 frame_count = 0
 total_time = 0
 
+angles_per_frame = {"Torso": [], "Hip": [], "Knee": [], "Arm": []}
+
 # Loop through frames
 while cap.isOpened() and segmented_cap.isOpened():
     ret, original_frame = cap.read()
@@ -99,7 +108,9 @@ while cap.isOpened() and segmented_cap.isOpened():
             bbox = instance["bbox"]
 
             pose_frame = draw_keypoints(pose_frame, keypoints, colors, skeleton_links, bbox)
-            pose_frame = process_pose_angles(pose_frame, keypoints)
+            pose_frame, angles = process_pose_angles(pose_frame, keypoints)
+            for joint, angle in angles.items():
+                angles_per_frame[joint].append(angle)
 
             # Filter keypoints
             if filtering:
@@ -107,6 +118,8 @@ while cap.isOpened() and segmented_cap.isOpened():
                 keypoints = keypoint_filter.filter_keypoints(instance_id, keypoints)
                 filtered_frame = draw_keypoints(filtered_frame, keypoints, colors, skeleton_links, bbox)
                 filtered_frame = process_pose_angles(filtered_frame, keypoints)
+                for joint, angle in angles.items():
+                    angles_per_frame[joint].append(angle)
                 pose_frame = filtered_frame
 
             # Only process the first instance for now
@@ -138,3 +151,19 @@ print(f"Processed {frame_count} frames in {total_time:.2f} seconds.")
 print(f"Average time per frame: {average_time_per_frame:.3f} seconds ({1/average_time_per_frame:.2f} FPS)")
 
 print(f"Output video saved at {output_video_path}")
+
+# Plot angles over time
+
+plt.figure(figsize=(12, 6))
+for joint, angles in angles_per_frame.items():
+    plt.plot(angles, label=joint)
+
+plt.title("Joint Angles Over Time")
+plt.xlabel("Frame Index")
+plt.ylabel("Angle (degrees)")
+plt.legend()
+plt.grid()
+plt.tight_layout()
+plt.savefig(f"data/{base_name}_joint_angles.png")
+plt.show()
+
