@@ -76,20 +76,23 @@ while cap.isOpened():
 
         # Detect jump (y decreases)
         if previous_y is not None:
+            # the diver should be in the middle of the frame
+            if previous_y < frame_height * 0.25 or previous_y > frame_height * 0.75 or h * w < 5000:
+                previous_y = y
+                continue
             velocity_y = previous_y - y  # Difference in y-coordinate (speed of movement)
-            if start_frame is None and velocity_y > 10:  # Threshold for detecting jump (adjust as needed)
+            if start_frame is None and velocity_y > 10 and velocity_y < 20:  # Threshold for detecting jump (adjust as needed)
                 start_frame = frame_count
                 print(f"Jump detected at frame {start_frame} with velocity {velocity_y} at y={y}")
 
         # Detect reaching the bottom (more gradual threshold, percentage of screen)
-        if y > frame_height * 0.75:  # The diver is at a lower position (85% of frame height)
-            end_frame = frame_count
-            print(f"Diver reached bottom at frame {end_frame} with y={y}")
+        if y > frame_height * 0.75 and start_frame is not None:  # The diver is at a lower position (85% of frame height)
+            buffer_frames = 50  # Buffer frames to ensure the diver is at the bottom
+            end_frame = frame_count + buffer_frames
+            print(f"Diver reached bottom at frame {end_frame} with y={y} (buffer={buffer_frames})")
             break
 
         previous_y = y # Update previous y-coordinate
-    else:
-        print("No diver detected.")
 
 
 # Validate start_frame and end_frame
@@ -100,9 +103,12 @@ if start_frame is None or end_frame is None or start_frame >= end_frame:
     if end_frame is None:
         print("No bottom reached.")
         end_frame = frame_count - 1
-    else:
+    if start_frame >= end_frame:
         print("Invalid start_frame and end_frame. Resetting to full video.")
         start_frame = 0
+        end_frame = frame_count - 1
+    if end_frame > frame_count - 1:
+        print("Bottom reached at the end of the video.")
         end_frame = frame_count - 1
 
 # Trim the video from start_frame to end_frame
