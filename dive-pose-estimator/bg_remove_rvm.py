@@ -63,20 +63,26 @@ while cap.isOpened():
     pha = pha[0][0].cpu().numpy()
     mask = (pha * 255).astype(np.uint8)
 
-    # Find the largest connected component (assumed to be the diver)
+    # Find the connected components
     num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
 
-    if num_labels > 1:
-        # Get the largest non-background component
-        largest_label = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
-        mask = np.uint8(labels == largest_label) * 255
+    # Sort components by area (stats[:, cv2.CC_STAT_AREA] contains the area of each component)
+    sorted_indices = np.argsort(stats[1:, cv2.CC_STAT_AREA])[::-1]  # Exclude background (index 0), sort in descending order
+
+    # Select the two largest components (index 0 is the background, so start from index 1)
+    selected_labels = sorted_indices[:2] + 1  # Add 1 to include the label starting from 1 (not 0)
+
+    # Create a new mask with only the two largest components
+    new_mask = np.zeros_like(mask)
+    for label in selected_labels:
+        new_mask[labels == label] = 255  # Set the pixels of the selected components to 255
 
     # Dilate the mask to remove small holes
     kernel = np.ones((100, 100), np.uint8)  # Adjusted kernel size for better precision
-    mask = cv2.dilate(mask, kernel, iterations=1)
+    new_mask = cv2.dilate(new_mask, kernel, iterations=1)
 
-    # Apply the mask to the original frame
-    masked_frame = cv2.bitwise_and(frame, frame, mask=mask)
+    # Apply the new mask to the original frame
+    masked_frame = cv2.bitwise_and(frame, frame, mask=new_mask)
 
     # Write the frame to the output video
     out.write(masked_frame)
@@ -99,3 +105,4 @@ cv2.destroyAllWindows()
 average_time_per_frame = total_time / frame_count if frame_count > 0 else 0
 print(f"Processed {frame_count} frames in {total_time:.2f} seconds.")
 print(f"Average time per frame: {average_time_per_frame:.3f} seconds ({1/average_time_per_frame:.2f} FPS)")
+print(f"Output video saved to: {output_video_path}")
