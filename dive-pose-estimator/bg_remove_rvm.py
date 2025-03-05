@@ -3,6 +3,7 @@ import torch
 import numpy as np
 from model.model import MattingNetwork
 import time
+from argparse import ArgumentParser
 
 # Load RVM model
 model_path = "rvm_mobilenetv3.pth"
@@ -13,7 +14,9 @@ print(f"Using device: {device}")
 model = model.to(device).eval()
 
 # Input and output video paths
-base_name = "Elena"
+parser = ArgumentParser()
+parser.add_argument("--base_name", type=str, required=True, help="Base name of the video file")
+base_name = parser.parse_args().base_name
 input_video_path = f"../../data/preprocessed/{base_name}_rotated.mp4"
 output_video_path = f"../../data/segmented/{base_name}_segmented.mp4"
 
