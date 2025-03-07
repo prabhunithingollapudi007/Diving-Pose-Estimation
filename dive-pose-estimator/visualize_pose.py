@@ -66,7 +66,7 @@ while cap.isOpened():
     if frame_idx < len(instance_info):
         frame = instance_info[frame_idx]
         instances = frame["instances"]
-        if len(instances) > 2:
+        if len(instances) > 4:
             print(f"Frame {frame_idx} has {len(instances)} instances")
         # Draw keypoints and bounding boxes for each instance ( multi-person pose estimation )
         for instance_id, instance in enumerate(instances):
