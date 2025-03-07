@@ -57,6 +57,7 @@ angles_per_frame = {
 
 torso_angles = []  # Stores per-frame torso angles
 total_rotation_over_time = []  # Tracks cumulative rotation per frame
+diver_com_over_time = []  # Tracks diver center of mass over time
 
 # Loop through frames
 while cap.isOpened():
@@ -103,12 +104,15 @@ while cap.isOpened():
 
             # Draw keypoints
             pose_frame = draw_keypoints(pose_frame, keypoints, skeleton_links, previous_bbox)
-            pose_frame, angles, torso_angles = process_pose_angles(pose_frame, keypoints, torso_angles)
+            pose_frame, angles, torso_angles, com = process_pose_angles(pose_frame, keypoints, torso_angles)
 
             # Compute total rotation angle
             total_rotation = compute_total_rotation(torso_angles)
             total_rotation_over_time.append(total_rotation)
 
+            # Diver center of mass
+            diver_com_over_time.append(com)
+            
         else:
             # If no valid bbox is found, still add rotation (but duplicate last value)
             if total_rotation_over_time:
@@ -138,13 +142,25 @@ print(f"Processed {frame_count} frames in {total_time:.2f} seconds.")
 print(f"Average time per frame: {average_time_per_frame:.3f} seconds ({1/average_time_per_frame:.2f} FPS)")
 print(f"Output video saved at {output_video_path}")
 
-# Plot total rotation angle over time
-plt.figure(figsize=(10, 6))
-plt.plot(total_rotation_over_time, label="Total Rotation Angle", color='b')
+# Plot total rotation angle and diver com over time
+plt.figure(figsize=(12, 8))
+plt.subplot(1, 2, 1)
+plt.plot(total_rotation_over_time)
 plt.title("Total Rotation Angle Over Time")
-plt.xlabel("Frame Index")
-plt.ylabel("Angle (degrees)")
-plt.legend()
-plt.grid()
+plt.xlabel("Frame")
+plt.ylabel("Total Rotation Angle (degrees)")
+plt.grid(True)
+
+plt.subplot(1, 2, 2)
+com_x, com_y = zip(*diver_com_over_time)
+plt.plot(com_x, com_y, label="Center of Mass Path", marker='o', color='blue')
+# Add title and labels
+plt.title("Diver Center of Mass Path")
+plt.xlabel("X Position (pixels)")
+plt.ylabel("Y Position (pixels)")
+
+# Add gridlines for better readability
+plt.grid(True)
+
 plt.savefig(f"data/pose-estimated/{base_name}/total_rotation.png")
 plt.show()
