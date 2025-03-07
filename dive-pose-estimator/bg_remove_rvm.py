@@ -78,7 +78,7 @@ while cap.isOpened():
         new_mask[labels == label] = 255  # Set the pixels of the selected components to 255
 
     # Dilate the mask to remove small holes
-    kernel = np.ones((100, 100), np.uint8)  # Adjusted kernel size for better precision
+    kernel = np.ones((50, 50), np.uint8)  # Adjusted kernel size for better precision
     new_mask = cv2.dilate(new_mask, kernel, iterations=1)
 
     # Apply the new mask to the original frame
