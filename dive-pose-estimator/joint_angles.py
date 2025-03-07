@@ -1,6 +1,5 @@
 import numpy as np
 import cv2
-import json
 
 def calculate_angle(a, b, c):
     """Calculate the angle ABC (in degrees) using the cosine rule."""
@@ -29,10 +28,18 @@ def calculate_angle(a, b, c):
     theta = np.arccos(cos_theta)
     return np.degrees(theta)
 
-def put_text(frame, angle, joint, position_x, position_y):
+
+def calculate_orientation(a, b):
+    """Compute the absolute torso angle using atan2."""
+    delta_x = b[0] - a[0]
+    delta_y = b[1] - a[1]
+    return np.degrees(np.arctan2(delta_y, delta_x))
+
+def put_text(frame, text, label, position_x, position_y):
+    """Overlay text on frame."""
     cv2.putText(
             frame,
-            f"{joint}: {int(angle)} degrees",
+            f"{label}: {int(text)} degrees",
             (position_x, position_y),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.6,
@@ -48,7 +55,23 @@ LEFT_HIP = 11
 LEFT_KNEE = 13
 LEFT_ANKLE = 15
 
-def process_pose_angles(pose_frame, keypoints):
+def compute_total_rotation(torso_angles):
+    """Compute cumulative rotation angle from torso orientation over time."""
+    total_rotation = 0
+    for i in range(1, len(torso_angles)):
+        delta_angle = torso_angles[i] - torso_angles[i - 1]
+
+        # Handle angle wrapping (e.g., crossing -180° to 180°)
+        if delta_angle > 180:
+            delta_angle -= 360
+        elif delta_angle < -180:
+            delta_angle += 360
+
+        total_rotation += abs(delta_angle)
+    
+    return total_rotation
+
+def process_pose_angles(pose_frame, keypoints, torso_angles):
     """Compute and display angles on the given pose frame."""
     keypoints = np.array(keypoints)  # Convert to NumPy array
 
@@ -73,4 +96,18 @@ def process_pose_angles(pose_frame, keypoints):
         put_text(pose_frame, angle, joint, text_x, text_y)
         text_y += 30
 
-    return pose_frame, angles
+    # Compute current torso orientation
+    current_torso_angle = calculate_orientation(keypoints[LEFT_SHOULDER], keypoints[LEFT_HIP])
+
+    # Append torso angle before computing total rotation
+    torso_angles.append(current_torso_angle)
+
+    # Compute total rotation angle
+    total_rotation = compute_total_rotation(torso_angles)
+
+    # Display rotation information
+    put_text(pose_frame, current_torso_angle, "Current Torso", text_x, text_y)
+    text_y += 30
+    put_text(pose_frame, total_rotation, "Total Rotation", text_x, text_y)
+
+    return pose_frame, angles, torso_angles

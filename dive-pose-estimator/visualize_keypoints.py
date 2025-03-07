@@ -1,12 +1,10 @@
-""" Visualize the pose estimation results. """
-
 import json
 import numpy as np
 import cv2
 import time
 from filter_keypoints import KeypointFilter
 from joint_angles import process_pose_angles, compute_total_rotation
-from utils import draw_keypoints, colors
+from utils import draw_keypoints, bbox_distance, is_bbox_valid, is_next_bbox_valid, is_bbox_in_center
 from argparse import ArgumentParser
 import matplotlib.pyplot as plt
 
@@ -23,12 +21,12 @@ output_video_path = f"data/pose-estimated/{base_name}/{base_name}_side_by_side.m
 with open(file_path, 'r') as f:
     data = json.load(f)
 
-# Extract metadata and instance info and skeleton links
+# Extract metadata
 instance_info = data["instance_info"]
 meta_info = data["meta_info"]
 skeleton_links = meta_info["skeleton_links"]
 
-# Initialize the filter
+# Initialize keypoint filter
 keypoint_filter = KeypointFilter(window_size=5)
 
 # Video settings
@@ -43,12 +41,11 @@ output_height = frame_height
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 out = cv2.VideoWriter(output_video_path, fourcc, fps, (output_width, output_height))
 
-# Initialize variables
+# Tracking Variables
 frame_idx = 0
-
-# Initialize timing variables
 frame_count = 0
 total_time = 0
+previous_bbox = None  # Stores last known bounding box for the main diver
 
 angles_per_frame = {
     "Torso": [],
@@ -58,7 +55,8 @@ angles_per_frame = {
     "Total Rotation": []
 }
 
-torso_angles = []
+torso_angles = []  # Stores per-frame torso angles
+total_rotation_over_time = []  # Tracks cumulative rotation per frame
 
 # Loop through frames
 while cap.isOpened():
@@ -66,52 +64,70 @@ while cap.isOpened():
     if not ret:
         break
 
-    # Start time for this frame
     start_time = time.time()
-
-    # Create a blank canvas for the pose visualization
     pose_frame = np.zeros((frame_height, frame_width, 3), np.uint8)
 
-    # Process keypoints for the current frame
+    best_match_instance = None
+
     if frame_idx < len(instance_info):
         frame = instance_info[frame_idx]
         instances = frame["instances"]
-        main_diver_instance = None
-        # Draw keypoints and bounding boxes for each instance ( multi-person pose estimation )
+
         for instance_id, instance in enumerate(instances):
-            if main_diver_instance is None:
-                main_diver_instance = instance_id
-            elif main_diver_instance != instance_id:
-                continue
-            keypoints = instance["keypoints"]
-            bbox = instance["bbox"]
+            bbox = instance.get("bbox", None)
 
-            pose_frame = draw_keypoints(pose_frame, keypoints, colors, skeleton_links, bbox)
+            # Fix possible nested lists
+            if isinstance(bbox, list) and len(bbox) == 1:
+                bbox = bbox[0]  
+
+            if not bbox or not is_bbox_valid(bbox):
+                continue # Skip invalid bbox
+
+            if previous_bbox is None and is_bbox_in_center(bbox, frame_height):
+                best_match_instance = instance
+                previous_bbox = bbox
+                break
             
-            pose_frame, angles, torso_angles = process_pose_angles(pose_frame, keypoints, torso_angles)
-            for joint, angle in angles.items():
-                angles_per_frame[joint].append(angle)
+            if not previous_bbox:
+                continue
 
-            # Only process the first instance for now
+            if not is_next_bbox_valid(bbox, previous_bbox):
+                continue
+            
+            best_match_instance = instance
             break
 
-    # Concatenate original, segmented, and pose visualization
+        if best_match_instance:
+            keypoints = best_match_instance["keypoints"]
+            previous_bbox = best_match_instance["bbox"][0]  # Update latest bbox
+
+            # Draw keypoints
+            pose_frame = draw_keypoints(pose_frame, keypoints, skeleton_links, previous_bbox)
+            pose_frame, angles, torso_angles = process_pose_angles(pose_frame, keypoints, torso_angles)
+
+            # Compute total rotation angle
+            total_rotation = compute_total_rotation(torso_angles)
+            total_rotation_over_time.append(total_rotation)
+
+        else:
+            # If no valid bbox is found, still add rotation (but duplicate last value)
+            if total_rotation_over_time:
+                total_rotation_over_time.append(total_rotation_over_time[-1])
+            else:
+                total_rotation_over_time.append(0)  # If first frame is missing
+
     combined_frame = np.hstack((trimmed_frame, pose_frame))
-    # Write output frame
     out.write(combined_frame)
 
     frame_idx += 1
-
-    # Calculate processing time for this frame
     frame_time = time.time() - start_time
     total_time += frame_time
     frame_count += 1
 
-    # Print progress
     if frame_count % 100 == 0:
         print(f"Processed {frame_count} frames")
 
-# Release the VideoWriter and destroy all windows
+# Release resources
 cap.release()
 out.release()
 cv2.destroyAllWindows()
@@ -120,20 +136,15 @@ cv2.destroyAllWindows()
 average_time_per_frame = total_time / frame_count if frame_count > 0 else 0
 print(f"Processed {frame_count} frames in {total_time:.2f} seconds.")
 print(f"Average time per frame: {average_time_per_frame:.3f} seconds ({1/average_time_per_frame:.2f} FPS)")
-
 print(f"Output video saved at {output_video_path}")
 
 # Plot total rotation angle over time
-print("Total rotation angles:", torso_angles)
-print("Total rotation angle over time:", compute_total_rotation(torso_angles))
 plt.figure(figsize=(10, 6))
-plt.plot(torso_angles, label="Total Rotation Angle")
+plt.plot(total_rotation_over_time, label="Total Rotation Angle", color='b')
 plt.title("Total Rotation Angle Over Time")
 plt.xlabel("Frame Index")
 plt.ylabel("Angle (degrees)")
 plt.legend()
 plt.grid()
-plt.tight_layout()
-plt.savefig(f"data/pose-estimated/{base_name}/rotation_angles.png")
+plt.savefig(f"data/pose-estimated/{base_name}/total_rotation.png")
 plt.show()
-

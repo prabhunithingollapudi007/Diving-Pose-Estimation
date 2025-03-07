@@ -246,6 +246,12 @@ Average time per frame: 0.227 seconds (4.40 FPS)
 
 Final choices 
 
+Jana.mp4 ================================
+i) RVM + trim + bottomup (dekr_hrnet-w32_8xb10-140e_coco-512x512.py)
+
+        Processed 196 frames in 866.51 seconds.
+        Average time per frame: 4.421 seconds (0.23 FPS)
+
 Elena_rotated.mp4 ================================
 
 i) RVM for segmentation + RTM Det Nano (rtmdet_nano_320-8xb32_coco-person)  + RTM Pose (rtmpose-m_8xb256-420e_body8-384x288)
@@ -346,3 +352,13 @@ Current Problems:
 1. Cannot detect poses when there's a twist in the pose (no smooth transition)
 2. Cannot detect poses when there's too many people in the video
 3. Cannot detect poses when the person is too far away from the camera
+
+Improvements:
+1. Ability to segment instance of diver
+
+Effects:
+1. Light - lotti 2
+2. Hair of diver - lotti 2
+3. Multiple person - lotti 1, tim 1
+4. Far from camera - e wassen 1
+
