@@ -1,7 +1,10 @@
 MIN_BBOX_AREA = 5000
-MAX_BBOX_DISTANCE = 100
+MAX_BBOX_DISTANCE = 200
 MIN_BBOX_START_HEIGHT_LOWER_LIMIT = 0.3
 MIN_BBOX_START_HEIGHT_UPPER_LIMIT = 0.7
+MAX_CONSECUTIVE_INVALID_FRAMES = 10
+FILTER_WINDOW_SIZE = 5
+FILTER_SIGMA = 1
 
 COLORS = [
 
@@ -22,4 +25,12 @@ COLORS = [
     (170, 0, 255),  # Right knee
     (255, 0, 255),  # Left ankle
     (255, 0, 170)  # Right ankle
+]
+
+STAGES = [
+    "Absprung",
+    "Ansatz",
+    "Beginn Streckung",
+    "Ende Streckung",
+    "Eintauchen"
 ]

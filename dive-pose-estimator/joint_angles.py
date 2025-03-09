@@ -105,9 +105,16 @@ def process_pose_angles(pose_frame, keypoints, torso_angles):
     # Compute total rotation angle
     total_rotation = compute_total_rotation(torso_angles)
 
+    # Display center of mass
+    com_x = (keypoints[LEFT_HIP][0] + keypoints[LEFT_SHOULDER][0] ) / 2
+    com_y = (keypoints[LEFT_HIP][1] + keypoints[LEFT_SHOULDER][1] ) / 2
+    com = (com_x, com_y)
+    cv2.circle(pose_frame, (int(com[0]), int(com[1])), 10, (255, 255, 255), -1)
+
     # Display rotation information
     put_text(pose_frame, current_torso_angle, "Current Torso", text_x, text_y)
     text_y += 30
     put_text(pose_frame, total_rotation, "Total Rotation", text_x, text_y)
 
-    return pose_frame, angles, torso_angles
+    return pose_frame, angles, torso_angles, com
+

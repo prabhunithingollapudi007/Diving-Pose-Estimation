@@ -77,7 +77,7 @@ while cap.isOpened():
         # Detect jump (y decreases)
         if previous_y is not None:
             # the diver should be in the middle of the frame
-            if previous_y < frame_height * 0.25 or previous_y > frame_height * 0.75 or h * w < 5000:
+            if h * w < 5000:
                 previous_y = y
                 continue
             velocity_y = previous_y - y  # Difference in y-coordinate (speed of movement)
