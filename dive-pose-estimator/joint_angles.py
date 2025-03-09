@@ -1,5 +1,7 @@
 import numpy as np
 import cv2
+from filtering import gaussian_filter
+from config import STAGES, FILTER_SIGMA
 
 def calculate_angle(a, b, c):
     """Calculate the angle ABC (in degrees) using the cosine rule."""
@@ -118,3 +120,60 @@ def process_pose_angles(pose_frame, keypoints, torso_angles):
 
     return pose_frame, angles, torso_angles, com
 
+def get_all_filtered_metrics(com, total_rotation):
+    com_x = [point[0] for point in com]
+    com_y = [point[1] for point in com]
+
+    filtered_com_y = gaussian_filter(com_y, FILTER_SIGMA)
+    filtered_com_x = gaussian_filter(com_x, FILTER_SIGMA)
+    filtered_total_rotation = gaussian_filter(total_rotation, FILTER_SIGMA)
+    
+    velocity_y = np.diff(filtered_com_y)
+    filtered_velocity_y = gaussian_filter(velocity_y, FILTER_SIGMA)
+    acceleration_y = np.diff(filtered_velocity_y)
+    filtered_acceleration_y = gaussian_filter(acceleration_y, FILTER_SIGMA)
+
+    rotation_rate = np.diff(filtered_total_rotation)
+    filtered_rotation_rate = gaussian_filter(rotation_rate, FILTER_SIGMA)
+    rotation_acceleration = np.diff(filtered_rotation_rate)
+    filtered_rotation_acceleration = gaussian_filter(rotation_acceleration, FILTER_SIGMA)
+    
+    return filtered_com_x, filtered_com_y, filtered_total_rotation, filtered_velocity_y, filtered_acceleration_y, filtered_rotation_rate, filtered_rotation_acceleration
+
+
+def detect_stages(com_x, com_y, rotation_angles, velocity_y, acceleration_y, rotation_rate, rotation_acceleration, stages):
+    """Detects dive stages sequentially and returns a list of frame indices where transitions occur."""
+    
+    stage_indices = []  # Store the frame index for each stage
+    current_stage = 0
+
+    # 1. Absprung (Takeoff) - Peak upward velocity
+    absprung_index = np.argmax(velocity_y)
+    stage_indices.append(absprung_index)
+
+    # 2. Ansatz (Approach/Entry) - Significant rotation change
+    ansatz_start = absprung_index
+    ansatz_end = np.argmax(np.abs(rotation_acceleration[absprung_index:])) + absprung_index if len(rotation_acceleration[absprung_index:]) > 0 else len(velocity_y) - 1
+    stage_indices.append(ansatz_end)  # Use the end of Ansatz
+
+    # 3. Beginn Streckung (Start of Extension) - Rotation rate sign change
+    begin_streckung_index = ansatz_end
+    for i in range(begin_streckung_index, len(rotation_rate) - 1):
+        if np.sign(rotation_rate[i]) != np.sign(rotation_rate[i + 1]):
+            begin_streckung_index = i
+            break
+    stage_indices.append(begin_streckung_index)
+
+    # 4. Ende Streckung (End of Extension) - Rotation acceleration stabilizes
+    ende_streckung_index = begin_streckung_index
+    for i in range(begin_streckung_index, len(rotation_acceleration) - 1):
+        if np.sign(rotation_acceleration[i]) != np.sign(rotation_acceleration[i + 1]):
+            ende_streckung_index = i
+            break
+    stage_indices.append(ende_streckung_index)
+
+    # 5. Eintauchen (Entry) - Peak downward velocity
+    eintauchen_index = np.argmin(velocity_y)
+    stage_indices.append(eintauchen_index)
+
+    return stage_indices

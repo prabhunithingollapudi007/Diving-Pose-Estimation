@@ -2,12 +2,11 @@ import json
 import numpy as np
 import cv2
 import time
-from joint_angles import process_pose_angles, compute_total_rotation
+from joint_angles import process_pose_angles, compute_total_rotation, detect_stages, get_all_filtered_metrics
 from utils import draw_keypoints, is_bbox_valid, is_next_bbox_valid, is_bbox_in_center
 from argparse import ArgumentParser
 import matplotlib.pyplot as plt
-from config import MAX_CONSECUTIVE_INVALID_FRAMES, STAGES, FILTER_WINDOW_SIZE, FILTER_SIGMA
-from filtering import moving_average_filter, gaussian_filter
+from config import MAX_CONSECUTIVE_INVALID_FRAMES, STAGES
 
 # Input paths
 parser = ArgumentParser()
@@ -144,43 +143,52 @@ print(f"Processed {frame_count} frames in {total_time:.2f} seconds.")
 print(f"Average time per frame: {average_time_per_frame:.3f} seconds ({1/average_time_per_frame:.2f} FPS)")
 print(f"Output video saved at {output_video_path}")
 
-# Plot total rotation angle and diver com over time
-plt.figure(figsize=(12, 8))
+
+com_x, com_y, rotation_angles, velocity_y, acceleration_y, rotation_rate, rotation_acceleration = get_all_filtered_metrics(diver_com_over_time, total_rotation_over_time)
+
+# Detect dive stages
+# stage_indices = detect_stages(com_x, com_y, rotation_angles, velocity_y, acceleration_y, rotation_rate, rotation_acceleration, STAGES)
+
+plt.figure(figsize=(12, 6))
+
+# Rotation angle plot
 plt.subplot(2, 2, 1)
-plt.plot(total_rotation_over_time)
-plt.title("Total Rotation Angle Over Time")
+plt.plot(total_rotation_over_time, label="Total Rotation", color='blue')
+plt.title("Total Rotation Angle Over Time with Stages")
 plt.xlabel("Frame")
 plt.ylabel("Total Rotation Angle (degrees)")
+plt.legend()
 plt.grid(True)
 
+# Center of mass plot
 plt.subplot(2, 2, 2)
-com_x, com_y = zip(*diver_com_over_time)
 plt.plot(com_x, com_y, label="Center of Mass Path", marker='o', color='blue')
-# Add title and labels
-plt.title("Diver Center of Mass Path")
+plt.title("Diver Center of Mass Path with Stages")
 plt.xlabel("X Position (pixels)")
 plt.ylabel("Y Position (pixels)")
+plt.legend()
 plt.grid(True)
 
-# Plot filtered total rotation angle
-filtered_total_rotation = gaussian_filter(total_rotation_over_time, sigma=FILTER_SIGMA)
+# Velocity plots
 plt.subplot(2, 2, 3)
-plt.plot(filtered_total_rotation)
-plt.title("Filtered Total Rotation Angle Over Time")
+plt.plot(velocity_y, label="Velocity Y", color='blue')
+plt.plot(acceleration_y, label="Acceleration Y", color='red')
+plt.title("Diver Velocity and Acceleration with Stages")
 plt.xlabel("Frame")
-plt.ylabel("Total Rotation Angle (degrees)")
+plt.ylabel("Velocity / Acceleration (pixels/frame)")
+plt.legend()
 plt.grid(True)
 
-# Plot filtered diver com over time
-filtered_com_x = gaussian_filter(com_x, sigma=FILTER_SIGMA)
-filtered_com_y = gaussian_filter(com_y, sigma=FILTER_SIGMA)
+# Rotation rate plots
 plt.subplot(2, 2, 4)
-plt.plot(filtered_com_x, filtered_com_y, label="Center of Mass Path", marker='o', color='blue')
-plt.title("Filtered Diver Center of Mass Path")
-plt.xlabel("X Position (pixels)")
-plt.ylabel("Y Position (pixels)")
+plt.plot(rotation_rate, label="Rotation Rate", color='blue')
+plt.plot(rotation_acceleration, label="Rotation Acceleration", color='red')
+plt.title("Diver Rotation Rate and Acceleration with Stages")
+plt.xlabel("Frame")
+plt.ylabel("Rotation Rate / Acceleration (degrees/frame)")
+plt.legend()
 plt.grid(True)
 
-
-plt.savefig(f"data/pose-estimated/{base_name}/total_rotation.png")
+# Save the figure
+plt.savefig(f"data/pose-estimated/{base_name}/stages.png")
 plt.show()
