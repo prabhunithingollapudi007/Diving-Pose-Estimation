@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from config import MAX_BBOX_DISTANCE, MIN_BBOX_AREA, COLORS, MIN_BBOX_START_HEIGHT_LOWER_LIMIT, MIN_BBOX_START_HEIGHT_UPPER_LIMIT
+from config import BOARD_HEIGHT_METERS, INITIAL_DIVER_HEIGHT_METERS
 
 def draw_keypoints(frame, keypoints, skeleton_links, bbox):
     # Draw skeleton
@@ -63,3 +64,7 @@ def is_bbox_in_center(bbox, frame_height):
 
     # Return True if bbox is in the center
     return MIN_BBOX_START_HEIGHT_LOWER_LIMIT * frame_height < center < MIN_BBOX_START_HEIGHT_UPPER_LIMIT * frame_height
+
+def pixel_to_meter(y_com, scaling_factor):
+    """Convert pixel-based CoM to real-world height using a fixed scaling factor."""
+    return y_com * scaling_factor - BOARD_HEIGHT_METERS + INITIAL_DIVER_HEIGHT_METERS - 1

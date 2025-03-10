@@ -3,10 +3,10 @@ import numpy as np
 import cv2
 import time
 from joint_angles import process_pose_angles, compute_total_rotation, detect_stages, get_all_filtered_metrics
-from utils import draw_keypoints, is_bbox_valid, is_next_bbox_valid, is_bbox_in_center
+from utils import draw_keypoints, is_bbox_valid, is_next_bbox_valid, is_bbox_in_center, pixel_to_meter
 from argparse import ArgumentParser
 import matplotlib.pyplot as plt
-from config import MAX_CONSECUTIVE_INVALID_FRAMES, STAGES
+from config import MAX_CONSECUTIVE_INVALID_FRAMES, STAGES, DIVER_ON_BOARD_HEIGHT_PIXEL, WATER_HEIGHT_PIXEL, INITIAL_DIVER_HEIGHT_METERS, INITIAL_DIVER_HEIGHT_METERS, BOARD_HEIGHT_METERS
 
 # Input paths
 parser = ArgumentParser()
@@ -55,6 +55,7 @@ angles_per_frame = {
 torso_angles = []  # Stores per-frame torso angles
 total_rotation_over_time = []  # Tracks cumulative rotation per frame
 diver_com_over_time = []  # Tracks diver center of mass over time
+diver_max_y_over_time = []  # Tracks diver max Y-coordinate over time
 consecutive_invalid_frames = 0
 
 # Loop through frames
@@ -104,7 +105,7 @@ while cap.isOpened():
 
             # Draw keypoints
             pose_frame = draw_keypoints(pose_frame, keypoints, skeleton_links, previous_bbox)
-            pose_frame, angles, torso_angles, com = process_pose_angles(pose_frame, keypoints, torso_angles)
+            pose_frame, angles, torso_angles, com, max_y = process_pose_angles(pose_frame, keypoints, torso_angles)
 
             # Compute total rotation angle
             total_rotation = compute_total_rotation(torso_angles)
@@ -112,6 +113,9 @@ while cap.isOpened():
 
             # Diver center of mass
             diver_com_over_time.append(com)
+
+            # Diver max Y-coordinate
+            diver_max_y_over_time.append(max_y)
 
             # reset consecutive invalid frames
             consecutive_invalid_frames = 0
@@ -144,7 +148,7 @@ print(f"Average time per frame: {average_time_per_frame:.3f} seconds ({1/average
 print(f"Output video saved at {output_video_path}")
 
 
-com_x, com_y, rotation_angles, velocity_y, acceleration_y, rotation_rate, rotation_acceleration = get_all_filtered_metrics(diver_com_over_time, total_rotation_over_time)
+com_x, com_y, rotation_angles, velocity_y, acceleration_y, rotation_rate, rotation_acceleration, max_y = get_all_filtered_metrics(diver_com_over_time, total_rotation_over_time, diver_max_y_over_time)
 
 # Detect dive stages
 # stage_indices = detect_stages(com_x, com_y, rotation_angles, velocity_y, acceleration_y, rotation_rate, rotation_acceleration, STAGES)
@@ -190,5 +194,45 @@ plt.legend()
 plt.grid(True)
 
 # Save the figure
-plt.savefig(f"data/pose-estimated/{base_name}/stages.png")
+plt.savefig(f"data/pose-estimated/{base_name}/metrics.png")
+
+# Find the height of the diver
+
+max_y = [frame_height - y for y in max_y]  # Convert Y-coordinate to top-left origin
+
+# Assume y_board and y_water are known (fixed reference points)
+y_max = max(max_y)  # Highest detected CoM
+y_min = min(max_y)  # Lowest detected CoM (end of fall)
+
+# Convert each CoM Y-coordinate to real-world height
+
+scaling_factor = (BOARD_HEIGHT_METERS + INITIAL_DIVER_HEIGHT_METERS) / (DIVER_ON_BOARD_HEIGHT_PIXEL - WATER_HEIGHT_PIXEL)
+
+print(f"Scaling factor: {scaling_factor} to convert pixel-based CoM to real-world height")
+
+diver_heights = [pixel_to_meter(y, scaling_factor) for y in max_y]
+
+frame_times = np.arange(len(max_y)) / fps  # Assuming constant fps
+
+# Plot the diver height over time
+plt.figure(figsize=(12, 6))
+plt.subplot(1, 2, 1)
+plt.plot(frame_times, diver_heights, label="Pose Estimation Height", color="blue")
+plt.xlabel("Time (s)")
+plt.ylabel("Height (m)")
+plt.title("Diver Height: Pose Estimation")
+plt.legend()
+plt.grid(True)
+
+# Plot the diver height over frames
+plt.subplot(1, 2, 2)
+plt.plot(com_y, diver_heights, label="Pose Estimation COM Pixel comparision", color="blue")
+plt.xlabel("frame")
+plt.ylabel("Height (pixels)")
+plt.title("Diver Height: Raw Data")
+plt.legend()
+plt.grid(True)
+# Save the figure
+
+plt.savefig(f"data/pose-estimated/{base_name}/heights.png")
 plt.show()
