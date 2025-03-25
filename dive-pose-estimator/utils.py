@@ -67,4 +67,14 @@ def is_bbox_in_center(bbox, frame_height):
 
 def pixel_to_meter(y_com, scaling_factor):
     """Convert pixel-based CoM to real-world height using a fixed scaling factor."""
-    return y_com * scaling_factor - BOARD_HEIGHT_METERS + INITIAL_DIVER_HEIGHT_METERS - 1
+    return y_com * scaling_factor - BOARD_HEIGHT_METERS
+
+def compute_angular_velocity(rotation_angles, fps):
+    """Computes angular velocity (degrees per second) from total rotation angles."""
+    dt = 1 / fps  # Time step between frames
+    angular_velocity = np.diff(rotation_angles) / dt  # Compute derivative
+
+    # Keep the array length consistent by padding with 0 at the start
+    angular_velocity = np.insert(angular_velocity, 0, 0)
+    
+    return angular_velocity

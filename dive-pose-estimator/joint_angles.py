@@ -89,12 +89,12 @@ def process_pose_angles(pose_frame, keypoints, torso_angles):
     text_x = pose_frame.shape[1] - 200  # Right side
     text_y = 30
 
-    angles = {}
+    joint_angle = {}
 
     # Calculate and draw angles
     for joint, (A, B, C) in joints.items():
         angle = calculate_angle(A, B, C)
-        angles[joint] = angle
+        joint_angle[joint] = angle
         put_text(pose_frame, angle, joint, text_x, text_y)
         text_y += 30
 
@@ -113,14 +113,19 @@ def process_pose_angles(pose_frame, keypoints, torso_angles):
     com = (com_x, com_y)
     cv2.circle(pose_frame, (int(com[0]), int(com[1])), 10, (255, 255, 255), -1)
 
+    # max y value
+    # return the com_y value
+    max_y = com_y
+
     # Display rotation information
     put_text(pose_frame, current_torso_angle, "Current Torso", text_x, text_y)
     text_y += 30
     put_text(pose_frame, total_rotation, "Total Rotation", text_x, text_y)
 
-    return pose_frame, angles, torso_angles, com
+    return pose_frame, joint_angle, torso_angles, com, max_y
 
-def get_all_filtered_metrics(com, total_rotation):
+def get_all_filtered_metrics(com, total_rotation, diver_max_y_over_time):
+    """Apply Gaussian filtering to all metrics."""
     com_x = [point[0] for point in com]
     com_y = [point[1] for point in com]
 
@@ -137,8 +142,10 @@ def get_all_filtered_metrics(com, total_rotation):
     filtered_rotation_rate = gaussian_filter(rotation_rate, FILTER_SIGMA)
     rotation_acceleration = np.diff(filtered_rotation_rate)
     filtered_rotation_acceleration = gaussian_filter(rotation_acceleration, FILTER_SIGMA)
+
+    diver_max_y_over_time = gaussian_filter(diver_max_y_over_time, FILTER_SIGMA)
     
-    return filtered_com_x, filtered_com_y, filtered_total_rotation, filtered_velocity_y, filtered_acceleration_y, filtered_rotation_rate, filtered_rotation_acceleration
+    return filtered_com_x, filtered_com_y, filtered_total_rotation, filtered_velocity_y, filtered_acceleration_y, filtered_rotation_rate, filtered_rotation_acceleration, diver_max_y_over_time
 
 
 def detect_stages(com_x, com_y, rotation_angles, velocity_y, acceleration_y, rotation_rate, rotation_acceleration, stages):
