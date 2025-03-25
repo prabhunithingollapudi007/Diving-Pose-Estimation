@@ -7,6 +7,8 @@ from utils import draw_keypoints, is_bbox_valid, is_next_bbox_valid, is_bbox_in_
 from argparse import ArgumentParser
 import matplotlib.pyplot as plt
 from config import MAX_CONSECUTIVE_INVALID_FRAMES, STAGES, DIVER_ON_BOARD_HEIGHT_PIXEL, WATER_HEIGHT_PIXEL, INITIAL_DIVER_HEIGHT_METERS, INITIAL_DIVER_HEIGHT_METERS, BOARD_HEIGHT_METERS
+from filtering import kalman_filter, gaussian_filter, moving_average_filter
+from utils import compute_angular_velocity
 
 # Input paths
 parser = ArgumentParser()
@@ -15,7 +17,10 @@ base_name = parser.parse_args().base_name
 
 file_path = f"data/pose-estimated/{base_name}/results_{base_name}_trimmed.json"
 trimmed_video_path = f'data/trimmed/{base_name}_trimmed.mp4'
-output_video_path = f"data/pose-estimated/{base_name}/{base_name}_side_by_side.mp4"
+# output_video_path = f"data/pose-estimated/{base_name}/{base_name}_side_by_side.mp4"
+# output_base_path = f"data/pose-estimated/{base_name}"
+output_video_path = f"dive-pose-estimator/results/{base_name}_side_by_side.mp4"
+output_base_path = f"dive-pose-estimator/results"
 
 # Load JSON file
 with open(file_path, 'r') as f:
@@ -44,12 +49,11 @@ frame_count = 0
 total_time = 0
 previous_bbox = None  # Stores last known bounding box for the main diver
 
-angles_per_frame = {
+joint_angles = {
     "Torso": [],
     "Hip": [],
     "Knee": [],
     "Arm": [],
-    "Total Rotation": []
 }
 
 torso_angles = []  # Stores per-frame torso angles
@@ -107,6 +111,10 @@ while cap.isOpened():
             pose_frame = draw_keypoints(pose_frame, keypoints, skeleton_links, previous_bbox)
             pose_frame, angles, torso_angles, com, max_y = process_pose_angles(pose_frame, keypoints, torso_angles)
 
+            # Append joint angles
+            for joint, angle in angles.items():
+                joint_angles[joint].append(angle)
+
             # Compute total rotation angle
             total_rotation = compute_total_rotation(torso_angles)
             total_rotation_over_time.append(total_rotation)
@@ -150,51 +158,7 @@ print(f"Output video saved at {output_video_path}")
 
 com_x, com_y, rotation_angles, velocity_y, acceleration_y, rotation_rate, rotation_acceleration, max_y = get_all_filtered_metrics(diver_com_over_time, total_rotation_over_time, diver_max_y_over_time)
 
-# Detect dive stages
-# stage_indices = detect_stages(com_x, com_y, rotation_angles, velocity_y, acceleration_y, rotation_rate, rotation_acceleration, STAGES)
-
-plt.figure(figsize=(12, 6))
-
-# Rotation angle plot
-plt.subplot(2, 2, 1)
-plt.plot(total_rotation_over_time, label="Total Rotation", color='blue')
-plt.title("Total Rotation Angle Over Time with Stages")
-plt.xlabel("Frame")
-plt.ylabel("Total Rotation Angle (degrees)")
-plt.legend()
-plt.grid(True)
-
-# Center of mass plot
-plt.subplot(2, 2, 2)
-plt.plot(com_x, com_y, label="Center of Mass Path", marker='o', color='blue')
-plt.title("Diver Center of Mass Path with Stages")
-plt.xlabel("X Position (pixels)")
-plt.ylabel("Y Position (pixels)")
-plt.legend()
-plt.grid(True)
-
-# Velocity plots
-plt.subplot(2, 2, 3)
-plt.plot(velocity_y, label="Velocity Y", color='blue')
-plt.plot(acceleration_y, label="Acceleration Y", color='red')
-plt.title("Diver Velocity and Acceleration with Stages")
-plt.xlabel("Frame")
-plt.ylabel("Velocity / Acceleration (pixels/frame)")
-plt.legend()
-plt.grid(True)
-
-# Rotation rate plots
-plt.subplot(2, 2, 4)
-plt.plot(rotation_rate, label="Rotation Rate", color='blue')
-plt.plot(rotation_acceleration, label="Rotation Acceleration", color='red')
-plt.title("Diver Rotation Rate and Acceleration with Stages")
-plt.xlabel("Frame")
-plt.ylabel("Rotation Rate / Acceleration (degrees/frame)")
-plt.legend()
-plt.grid(True)
-
-# Save the figure
-plt.savefig(f"data/pose-estimated/{base_name}/metrics.png")
+rotation_rate = compute_angular_velocity(total_rotation_over_time, fps)
 
 # Find the height of the diver
 
@@ -208,31 +172,86 @@ y_min = min(max_y)  # Lowest detected CoM (end of fall)
 
 scaling_factor = (BOARD_HEIGHT_METERS + INITIAL_DIVER_HEIGHT_METERS) / (DIVER_ON_BOARD_HEIGHT_PIXEL - WATER_HEIGHT_PIXEL)
 
-print(f"Scaling factor: {scaling_factor} to convert pixel-based CoM to real-world height")
-
 diver_heights = [pixel_to_meter(y, scaling_factor) for y in max_y]
 
 frame_times = np.arange(len(max_y)) / fps  # Assuming constant fps
 
+# Filter joint angles
+for joint, angles in joint_angles.items():
+    joint_angles[joint] = kalman_filter(angles)
+
+# Detect dive stages
+stage_indices = detect_stages(joint_angles, torso_angles, diver_heights, total_rotation_over_time, output_video_path, output_base_path, STAGES)
+
+plt.figure(figsize=(12, 6))
+
+# Rotation angle plot
+plt.subplot(1, 3, 1)
+plt.plot(total_rotation_over_time, label="Total Rotation", color='blue')
+for stage, idx in stage_indices.items():
+    plt.axvline(x=idx, color='red', linestyle='--', label=stage)
+plt.title("Total Rotation Angle Over Time with Stages")
+plt.xlabel("Frame")
+plt.ylabel("Total Rotation Angle (degrees)")
+plt.legend()
+plt.grid(True)
+
+# Center of mass plot
+plt.subplot(1, 3, 2)
+plt.plot(com_x, com_y, label="Center of Mass Path", marker='o', color='blue')
+plt.title("Diver Center of Mass Path")
+plt.xlabel("X Position (pixels)")
+plt.ylabel("Y Position (pixels)")
+plt.legend()
+plt.grid(True)
+
+# Rotation rate plots
+plt.subplot(1, 3, 3)
+plt.plot(rotation_rate, label="Rotation Rate", color='blue')
+for stage, idx in stage_indices.items():
+    plt.axvline(x=idx, color='red', linestyle='--', label=stage)
+plt.title("Diver Rotation Rate with Stages")
+plt.xlabel("Frame")
+plt.ylabel("Rotation Rate (degrees/second)")
+plt.legend()
+plt.grid(True)
+
+# Save the figure
+plt.savefig(f"{output_base_path}/metrics.png")
+
+
 # Plot the diver height over time
 plt.figure(figsize=(12, 6))
-plt.subplot(1, 2, 1)
 plt.plot(frame_times, diver_heights, label="Pose Estimation Height", color="blue")
+
+# Find max height and time
+max_height = max(diver_heights)
+max_height_idx = diver_heights.index(max_height)
+max_height_time = frame_times[max_height_idx]
+
+plt.plot(max_height_time, max_height, 'ro', label=f"Max Height: {max_height:.2f}m at {max_height_time:.2f}s")
+
 plt.xlabel("Time (s)")
 plt.ylabel("Height (m)")
 plt.title("Diver Height: Pose Estimation")
 plt.legend()
 plt.grid(True)
 
-# Plot the diver height over frames
-plt.subplot(1, 2, 2)
-plt.plot(com_y, diver_heights, label="Pose Estimation COM Pixel comparision", color="blue")
-plt.xlabel("frame")
-plt.ylabel("Height (pixels)")
-plt.title("Diver Height: Raw Data")
-plt.legend()
-plt.grid(True)
-# Save the figure
+plt.savefig(f"{output_base_path}/diver_height.png")
 
-plt.savefig(f"data/pose-estimated/{base_name}/heights.png")
-plt.show()
+# Joint angles plot for each joint on 2 * 2 grid
+plt.figure(figsize=(12, 6))
+for i, (joint, angles) in enumerate(joint_angles.items()):
+    plt.subplot(2, 2, i+1)
+    plt.plot(angles, label=joint)
+    for stage, idx in stage_indices.items():
+        plt.axvline(x=idx, color='red', linestyle='--', label=stage)
+    plt.title(f"{joint} Angle Over Time")
+    plt.xlabel("Frame")
+    plt.ylabel("Angle (degrees)")
+    plt.legend()
+    plt.grid(True)
+
+plt.tight_layout()
+plt.savefig(f"{output_base_path}/joint_angles.png")
+

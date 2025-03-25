@@ -148,39 +148,60 @@ def get_all_filtered_metrics(com, total_rotation, diver_max_y_over_time):
     return filtered_com_x, filtered_com_y, filtered_total_rotation, filtered_velocity_y, filtered_acceleration_y, filtered_rotation_rate, filtered_rotation_acceleration, diver_max_y_over_time
 
 
-def detect_stages(com_x, com_y, rotation_angles, velocity_y, acceleration_y, rotation_rate, rotation_acceleration, stages):
+def detect_stages(joint_angles, torso_angles, diver_heights, total_rotation_over_time, output_video_path, output_base_path, stages):
     """Detects dive stages sequentially and returns a list of frame indices where transitions occur."""
     
-    stage_indices = []  # Store the frame index for each stage
+    stage_indices = {}  # Store the frame index for each stage
     current_stage = 0
 
-    # 1. Absprung (Takeoff) - Peak upward velocity
-    absprung_index = np.argmax(velocity_y)
-    stage_indices.append(absprung_index)
+    capture = cv2.VideoCapture(output_video_path)
+    max_frames = capture.get(cv2.CAP_PROP_FRAME_COUNT)
+    frame_count = 0
 
-    # 2. Ansatz (Approach/Entry) - Significant rotation change
-    ansatz_start = absprung_index
-    ansatz_end = np.argmax(np.abs(rotation_acceleration[absprung_index:])) + absprung_index if len(rotation_acceleration[absprung_index:]) > 0 else len(velocity_y) - 1
-    stage_indices.append(ansatz_end)  # Use the end of Ansatz
-
-    # 3. Beginn Streckung (Start of Extension) - Rotation rate sign change
-    begin_streckung_index = ansatz_end
-    for i in range(begin_streckung_index, len(rotation_rate) - 1):
-        if np.sign(rotation_rate[i]) != np.sign(rotation_rate[i + 1]):
-            begin_streckung_index = i
+    while capture.isOpened():
+        ret, frame = capture.read()
+        if not ret:
             break
-    stage_indices.append(begin_streckung_index)
 
-    # 4. Ende Streckung (End of Extension) - Rotation acceleration stabilizes
-    ende_streckung_index = begin_streckung_index
-    for i in range(begin_streckung_index, len(rotation_acceleration) - 1):
-        if np.sign(rotation_acceleration[i]) != np.sign(rotation_acceleration[i + 1]):
-            ende_streckung_index = i
+        if frame_count >= max_frames:
             break
-    stage_indices.append(ende_streckung_index)
 
-    # 5. Eintauchen (Entry) - Peak downward velocity
-    eintauchen_index = np.argmin(velocity_y)
-    stage_indices.append(eintauchen_index)
+        # 1. Absprung (Takeoff) - total rotation angle is over 90 degrees and knee angle is over 150 degrees
+        if (current_stage == 0) and (total_rotation_over_time[frame_count] >= 90):
+            if joint_angles["Knee"][frame_count] >= 150:
+                stage_indices[stages[current_stage]] = frame_count
+                # Save this frame
+                cv2.imwrite(f"{output_base_path}/stage_{stages[current_stage]}.png", frame)
+                current_stage += 1
 
+        # 2. Ansatz (Approach/Entry) - Significant rotation change
+        if (current_stage == 1) and (torso_angles[frame_count] < 0):
+            stage_indices[stages[current_stage]] = frame_count
+            cv2.imwrite(f"{output_base_path}/stage_{stages[current_stage]}.png", frame)
+            current_stage += 1
+
+        # 3. Beginn Streckung (Start of Extension) - Rotation rate sign change
+        if (current_stage == 2) and (torso_angles[frame_count - 1] <= 0) and (torso_angles[frame_count] > 0):
+            if((180 - abs(torso_angles[frame_count - 1])) <= 20) and ((180 - abs(torso_angles[frame_count])) <= 20):
+                stage_indices[stages[current_stage]] = frame_count
+                cv2.imwrite(f"{output_base_path}/stage_{stages[current_stage]}.png", frame)
+                current_stage += 1
+
+
+        # 4. Ende Streckung (End of Extension) - Rotation acceleration stabilizes
+        if (current_stage == 3) and (abs(90 - torso_angles[frame_count]) <= 8):
+            if (abs(180 - joint_angles["Knee"][frame_count]) <= 8) and (abs(90 - joint_angles["Hip"][frame_count]) <= 8):
+                stage_indices[stages[current_stage]] = frame_count
+                cv2.imwrite(f"{output_base_path}/stage_{stages[current_stage]}.png", frame)
+                current_stage += 1
+
+        # 5. Eintauchen (Entry) - Peak downward velocity
+        if (current_stage == 4) and (abs(90 + torso_angles[frame_count]) <= 5):
+            stage_indices[stages[current_stage]] = frame_count
+            cv2.imwrite(f"{output_base_path}/stage_{stages[current_stage]}.png", frame)
+            break
+
+        frame_count += 1
+
+    capture.release()
     return stage_indices
