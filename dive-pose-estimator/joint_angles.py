@@ -133,19 +133,19 @@ def get_all_filtered_metrics(com, total_rotation, diver_max_y_over_time):
     filtered_com_x = gaussian_filter(com_x, FILTER_SIGMA)
     filtered_total_rotation = gaussian_filter(total_rotation, FILTER_SIGMA)
     
-    velocity_y = np.diff(filtered_com_y)
-    filtered_velocity_y = gaussian_filter(velocity_y, FILTER_SIGMA)
-    acceleration_y = np.diff(filtered_velocity_y)
-    filtered_acceleration_y = gaussian_filter(acceleration_y, FILTER_SIGMA)
+    # velocity_y = np.diff(filtered_com_y)
+    # filtered_velocity_y = gaussian_filter(velocity_y, FILTER_SIGMA)
+    # acceleration_y = np.diff(filtered_velocity_y)
+    # filtered_acceleration_y = gaussian_filter(acceleration_y, FILTER_SIGMA)
 
-    rotation_rate = np.diff(filtered_total_rotation)
-    filtered_rotation_rate = gaussian_filter(rotation_rate, FILTER_SIGMA)
-    rotation_acceleration = np.diff(filtered_rotation_rate)
-    filtered_rotation_acceleration = gaussian_filter(rotation_acceleration, FILTER_SIGMA)
+    # rotation_rate = np.diff(filtered_total_rotation)
+    # filtered_rotation_rate = gaussian_filter(rotation_rate, FILTER_SIGMA)
+    # rotation_acceleration = np.diff(filtered_rotation_rate)
+    # filtered_rotation_acceleration = gaussian_filter(rotation_acceleration, FILTER_SIGMA)
 
     diver_max_y_over_time = gaussian_filter(diver_max_y_over_time, FILTER_SIGMA)
     
-    return filtered_com_x, filtered_com_y, filtered_total_rotation, filtered_velocity_y, filtered_acceleration_y, filtered_rotation_rate, filtered_rotation_acceleration, diver_max_y_over_time
+    return filtered_com_x, filtered_com_y, filtered_total_rotation, diver_max_y_over_time
 
 
 def detect_stages(joint_angles, torso_angles, diver_heights, total_rotation_over_time, output_video_path, output_base_path, stages):

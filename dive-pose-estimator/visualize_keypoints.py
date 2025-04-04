@@ -156,7 +156,7 @@ print(f"Average time per frame: {average_time_per_frame:.3f} seconds ({1/average
 print(f"Output video saved at {output_video_path}")
 
 
-com_x, com_y, rotation_angles, velocity_y, acceleration_y, rotation_rate, rotation_acceleration, max_y = get_all_filtered_metrics(diver_com_over_time, total_rotation_over_time, diver_max_y_over_time)
+com_x, com_y, total_rotation_over_time, max_y = get_all_filtered_metrics(diver_com_over_time, total_rotation_over_time, diver_max_y_over_time)
 
 rotation_rate = compute_angular_velocity(total_rotation_over_time, fps)
 
@@ -183,9 +183,8 @@ for joint, angles in joint_angles.items():
 # Detect dive stages
 stage_indices = detect_stages(joint_angles, torso_angles, diver_heights, total_rotation_over_time, output_video_path, output_base_path, STAGES)
 
-plt.figure(figsize=(12, 6))
-
 # Rotation angle plot
+plt.figure(figsize=(12, 6))
 plt.subplot(1, 3, 1)
 plt.plot(total_rotation_over_time, label="Total Rotation", color='blue')
 for stage, idx in stage_indices.items():
@@ -230,6 +229,11 @@ max_height_idx = diver_heights.index(max_height)
 max_height_time = frame_times[max_height_idx]
 
 plt.plot(max_height_time, max_height, 'ro', label=f"Max Height: {max_height:.2f}m at {max_height_time:.2f}s")
+
+# Add stage lines
+for stage, idx in stage_indices.items():
+    plt.axvline(x=idx / fps, color='red', linestyle='--', label=f"{stage} Start")
+    plt.text(idx / fps, max_height, stage, color='red', fontsize=8, ha='center')
 
 plt.xlabel("Time (s)")
 plt.ylabel("Height (m)")
