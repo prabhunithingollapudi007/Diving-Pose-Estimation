@@ -4,10 +4,12 @@ from argparse import ArgumentParser
 
 # Input and output video paths
 parser = ArgumentParser()
-parser.add_argument("--base_name", type=str, required=True, help="Base name of the video file")
-base_name = parser.parse_args().base_name
-input_video_path = f"../data/segmented/{base_name}_segmented.mp4"
-output_video_path = f"../data/trimmed/{base_name}_trimmed.mp4"
+parser.add_argument("--input_video", type=str, required=True, help="input_video of the video file")
+    
+parser.add_argument("--output_base_path", type=str, required=True, help="Base path for results")
+
+input_video_path = parser.parse_args().input_video
+output_video_path = parser.parse_args().output_base_path + "/trimmed_video.mp4"
 
 # Open input video
 cap = cv2.VideoCapture(input_video_path)

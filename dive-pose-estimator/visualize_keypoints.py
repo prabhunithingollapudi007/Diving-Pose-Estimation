@@ -12,15 +12,16 @@ from utils import compute_angular_velocity
 
 # Input paths
 parser = ArgumentParser()
-parser.add_argument("--base_name", type=str, required=True, help="Base name of the video file")
-base_name = parser.parse_args().base_name
+parser.add_argument("--input_video", type=str, required=True, help="input_video of the video file")
+parser.add_argument("--output_base_path", type=str, required=True, help="Base path for results")
+parser.add_argument("--stage_detection", action="store_true", help="Detect stages")
 
-file_path = f"data/pose-estimated/{base_name}/results_{base_name}_trimmed.json"
-trimmed_video_path = f'data/trimmed/{base_name}_trimmed.mp4'
-# output_video_path = f"data/pose-estimated/{base_name}/{base_name}_side_by_side.mp4"
-# output_base_path = f"data/pose-estimated/{base_name}"
-output_video_path = f"dive-pose-estimator/results/{base_name}_side_by_side.mp4"
-output_base_path = f"dive-pose-estimator/results"
+output_base_path = parser.parse_args().output_base_path
+trimmed_video_path = parser.parse_args().input_video
+
+file_path = f'{output_base_path}/predictions.json'
+output_video_path = f"{output_base_path}/pose_estimation_output.mp4"
+stage_detection = parser.parse_args().stage_detection
 
 # Load JSON file
 with open(file_path, 'r') as f:
@@ -181,14 +182,16 @@ for joint, angles in joint_angles.items():
     joint_angles[joint] = kalman_filter(angles)
 
 # Detect dive stages
-stage_indices = detect_stages(joint_angles, torso_angles, diver_heights, total_rotation_over_time, output_video_path, output_base_path, STAGES)
+if stage_detection:
+    stage_indices = detect_stages(joint_angles, torso_angles, diver_heights, total_rotation_over_time, output_video_path, output_base_path, STAGES)
 
 # Rotation angle plot
 plt.figure(figsize=(12, 6))
 plt.subplot(1, 3, 1)
 plt.plot(total_rotation_over_time, label="Total Rotation", color='blue')
-for stage, idx in stage_indices.items():
-    plt.axvline(x=idx, color='red', linestyle='--', label=stage)
+if stage_detection:
+    for stage, idx in stage_indices.items():
+        plt.axvline(x=idx, color='red', linestyle='--', label=stage)
 plt.title("Total Rotation Angle Over Time with Stages")
 plt.xlabel("Frame")
 plt.ylabel("Total Rotation Angle (degrees)")
@@ -207,8 +210,9 @@ plt.grid(True)
 # Rotation rate plots
 plt.subplot(1, 3, 3)
 plt.plot(rotation_rate, label="Rotation Rate", color='blue')
-for stage, idx in stage_indices.items():
-    plt.axvline(x=idx, color='red', linestyle='--', label=stage)
+if stage_detection:
+    for stage, idx in stage_indices.items():
+        plt.axvline(x=idx, color='red', linestyle='--', label=stage)
 plt.title("Diver Rotation Rate with Stages")
 plt.xlabel("Frame")
 plt.ylabel("Rotation Rate (degrees/second)")
@@ -231,9 +235,10 @@ max_height_time = frame_times[max_height_idx]
 plt.plot(max_height_time, max_height, 'ro', label=f"Max Height: {max_height:.2f}m at {max_height_time:.2f}s")
 
 # Add stage lines
-for stage, idx in stage_indices.items():
-    plt.axvline(x=idx / fps, color='red', linestyle='--', label=f"{stage} Start")
-    plt.text(idx / fps, max_height, stage, color='red', fontsize=8, ha='center')
+if stage_detection:
+    for stage, idx in stage_indices.items():
+        plt.axvline(x=idx / fps, color='red', linestyle='--', label=f"{stage} Start")
+        plt.text(idx / fps, max_height, stage, color='red', fontsize=8, ha='center')
 
 plt.xlabel("Time (s)")
 plt.ylabel("Height (m)")
@@ -248,8 +253,9 @@ plt.figure(figsize=(12, 6))
 for i, (joint, angles) in enumerate(joint_angles.items()):
     plt.subplot(2, 2, i+1)
     plt.plot(angles, label=joint)
-    for stage, idx in stage_indices.items():
-        plt.axvline(x=idx, color='red', linestyle='--', label=stage)
+    if stage_detection:
+        for stage, idx in stage_indices.items():
+            plt.axvline(x=idx, color='red', linestyle='--', label=stage)
     plt.title(f"{joint} Angle Over Time")
     plt.xlabel("Frame")
     plt.ylabel("Angle (degrees)")
@@ -259,3 +265,24 @@ for i, (joint, angles) in enumerate(joint_angles.items()):
 plt.tight_layout()
 plt.savefig(f"{output_base_path}/joint_angles.png")
 
+
+# Save the joint angles to a JSON file
+joint_angles_serializable = {joint: list(map(float, angles)) for joint, angles in joint_angles.items()}
+joint_angles_file = f"{output_base_path}/joint_angles.json"
+with open(joint_angles_file, 'w') as f:
+    json.dump(joint_angles_serializable, f)
+print(f"Joint angles saved to {joint_angles_file}")
+
+# Save the filtered metrics to a JSON file
+filtered_metrics_file = f"{output_base_path}/filtered_metrics.json"
+filtered_metrics_serializable = {
+    "com_x": list(map(float, com_x)),
+    "com_y": list(map(float, com_y)),
+    "total_rotation_over_time": list(map(float, total_rotation_over_time)),
+    "max_y": list(map(float, max_y)),
+    "rotation_rate": list(map(float, rotation_rate)),
+    "diver_heights": list(map(float, diver_heights)),
+}
+with open(filtered_metrics_file, 'w') as f:
+    json.dump(filtered_metrics_serializable, f)
+print(f"Filtered metrics saved to {filtered_metrics_file}")

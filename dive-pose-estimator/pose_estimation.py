@@ -48,16 +48,19 @@ def process_one_image(img,
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument("--base_name", type=str, required=True, help="Base name of the video file")
-    base_name = parser.parse_args().base_name
-    input_file = f"../../data/trimmed/{base_name}_trimmed.mp4"
-    output_root = f"../../data/pose-estimated/{base_name}"
+    parser.add_argument("--input_video", type=str, required=True, help="input_video of the video file")
+    
+    parser.add_argument("--output_base_path", type=str, required=True, help="Base path for results")
+
+    input_file = parser.parse_args().input_video
+    output_base_path = parser.parse_args().output_base_path
+
     device = 'cpu'
     det_cat_id = 0
     bbox_thr = 0.25
     nms_thr = 0.5
 
-    det_config = "demo/mmdetection_cfg/rtmdet_m_640-8xb32_coco-person.py"
+    det_config = "models/mmpose/demo/mmdetection_cfg/rtmdet_m_640-8xb32_coco-person.py"
     det_checkpoint = "https://download.openmmlab.com/mmpose/v1/projects/rtmpose/rtmdet_m_8xb32-100e_coco-obj365-person-235e8209.pth"
 
     # det_config = "demo/mmdetection_cfg/rtmdet_nano_320-8xb32_coco-person.py"
@@ -67,16 +70,13 @@ def main():
     # pose_config = "configs/body_2d_keypoint/topdown_heatmap/crowdpose/td-hm_res101_8xb64-210e_crowdpose-320x256.py"
     # pose_checkpoint = "https://download.openmmlab.com/mmpose/top_down/resnet/res101_crowdpose_320x256-c88c512a_20201227.pth"
 
-    pose_config = "configs/body_2d_keypoint/rtmpose/body8/rtmpose-m_8xb256-420e_body8-384x288.py"
+    pose_config = "models/mmpose/configs/body_2d_keypoint/rtmpose/body8/rtmpose-m_8xb256-420e_body8-384x288.py"
     pose_checkpoint = "https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-body7_pt-body7_420e-384x288-65e718c4_20230504.pth"
 
     # pose_config = "configs/body_2d_keypoint/rtmpose/body8/rtmpose-m_8xb256-420e_body8-256x192.py"
     # pose_checkpoint = "https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-body7_pt-body7_420e-256x192-e48f03d0_20230504.pth"
 
-
-    mmengine.mkdir_or_exist(output_root)
-    pred_save_path = f'{output_root}/results_' \
-            f'{os.path.splitext(os.path.basename(input_file))[0]}.json'
+    pred_save_path = f'{output_base_path}/predictions.json'
 
     # Initialize timing variables
     frame_count = 0
