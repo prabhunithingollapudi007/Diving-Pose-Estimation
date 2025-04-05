@@ -5,20 +5,21 @@ from model.model import MattingNetwork
 import time
 from argparse import ArgumentParser
 
+
+# Input and output video paths
+parser = ArgumentParser()
+parser.add_argument("--input_video", type=str, required=True, help="Input video file")
+parser.add_argument("--output_base_path", type=str, required=True, help="Base path for results")
+input_video_path = parser.parse_args().input_video
+output_video_path = parser.parse_args().output_base_path + "segmented_video.mp4"
+
 # Load RVM model
-model_path = "rvm_mobilenetv3.pth"
+model_path = "models/RobustVideoMatting/rvm_mobilenetv3.pth"
 model = MattingNetwork('mobilenetv3')
 model.load_state_dict(torch.load(model_path))
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
 model = model.to(device).eval()
-
-# Input and output video paths
-parser = ArgumentParser()
-parser.add_argument("--base_name", type=str, required=True, help="Base name of the video file")
-base_name = parser.parse_args().base_name
-input_video_path = f"../../data/preprocessed/{base_name}_rotated.mp4"
-output_video_path = f"../../data/segmented/{base_name}_segmented.mp4"
 
 # Open input video
 cap = cv2.VideoCapture(input_video_path)

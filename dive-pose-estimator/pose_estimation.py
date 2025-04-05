@@ -55,9 +55,12 @@ def main():
     input_file = parser.parse_args().input_video
     output_base_path = parser.parse_args().output_base_path
 
+    print(f"Input video: {input_file}")
+    print(f"Output base path: {output_base_path}")
+
     device = 'cpu'
     det_cat_id = 0
-    bbox_thr = 0.25
+    bbox_thr = 0.2
     nms_thr = 0.5
 
     det_config = "models/mmpose/demo/mmdetection_cfg/rtmdet_m_640-8xb32_coco-person.py"
