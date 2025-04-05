@@ -86,7 +86,7 @@ def process_pose_angles(pose_frame, keypoints, torso_angles):
     }
 
     # Define position for text overlay
-    text_x = pose_frame.shape[1] - 200  # Right side
+    text_x = pose_frame.shape[1] - 300  # Right side
     text_y = 30
 
     joint_angle = {}
@@ -118,7 +118,7 @@ def process_pose_angles(pose_frame, keypoints, torso_angles):
     max_y = com_y
 
     # Display rotation information
-    put_text(pose_frame, current_torso_angle, "Current Torso", text_x, text_y)
+    put_text(pose_frame, current_torso_angle, "Current rotation", text_x, text_y)
     text_y += 30
     put_text(pose_frame, total_rotation, "Total Rotation", text_x, text_y)
 
