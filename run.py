@@ -27,6 +27,7 @@ step_end_string = "=============================================================
 
 """ Example usage:
 C:/Users/prabh/.conda/envs/openmmlab/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/run.py" --input_video .\data\raw\Jana_107B_3.5Salti_vorwaerts.avi --output_base_path .\dive-pose-estimator\results\ --rotate --start_time 18 --end_time 25
+C:/Users/prabh/.conda/envs/openmmlab/python.exe "c:/Users/prabh/FAU/Study/MaD Project Pose Estimation/run.py" --input_video .\data\raw\Elena_205B_2.5Salti_rueckwaerts.avi --output_base_path .\dive-pose-estimator\results\ --rotate --stage_detection --start_time 12 --end_time 18
 """
 
 # Parse the arguments
@@ -144,5 +145,5 @@ subprocess.run(command)
 print(step_end_string)
 
 end_ticks = time.time()
-print(f"Total time taken: {end_ticks - start_ticks} seconds or {end_ticks - start_ticks / 60} minutes")
+print(f"Total time taken: {end_ticks - start_ticks} seconds or {(end_ticks - start_ticks) / 60} minutes")
 print("Finished processing video")
