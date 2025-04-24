@@ -4,23 +4,23 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="kV-zj2LS0YhKv7PQ1ox8-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="kV-zj2LS0YhKv7PQ1ox8-1" target="kV-zj2LS0YhKv7PQ1ox8-2">
+        <mxCell id="kV-zj2LS0YhKv7PQ1ox8-6" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Pose Estimation Pipeline&lt;/h1&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="110" y="105" width="870" height="350" as="geometry" />
+        </mxCell>
+        <mxCell id="kV-zj2LS0YhKv7PQ1ox8-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="kV-zj2LS0YhKv7PQ1ox8-1" target="kV-zj2LS0YhKv7PQ1ox8-2" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="kV-zj2LS0YhKv7PQ1ox8-1" value="RVM: Background removal" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="kV-zj2LS0YhKv7PQ1ox8-1" value="RVM: Background removal" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="370" y="250" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="kV-zj2LS0YhKv7PQ1ox8-5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="kV-zj2LS0YhKv7PQ1ox8-2" target="kV-zj2LS0YhKv7PQ1ox8-4">
+        <mxCell id="kV-zj2LS0YhKv7PQ1ox8-5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="kV-zj2LS0YhKv7PQ1ox8-2" target="kV-zj2LS0YhKv7PQ1ox8-4" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="kV-zj2LS0YhKv7PQ1ox8-2" value="RTMPose + RTMDet: Keypoint tracking" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="kV-zj2LS0YhKv7PQ1ox8-2" value="RTMPose + RTMDet: Keypoint tracking" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="570" y="250" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="kV-zj2LS0YhKv7PQ1ox8-4" value="Joint angles, height, rotation" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="kV-zj2LS0YhKv7PQ1ox8-4" value="Joint angles, height, rotation" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="770" y="250" width="120" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="kV-zj2LS0YhKv7PQ1ox8-6" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Pose Estimation Pipeline&lt;/h1&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="50" y="40" width="870" height="350" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
