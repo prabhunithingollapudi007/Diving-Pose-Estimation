@@ -1,4 +1,35 @@
+# Dive Pose Estimator with Robust Video Matting
+This project is a video processing pipeline that uses pose estimation and video matting techniques to analyze and process videos. The main components of the project include:
 
+
+- Video matting using the Robust Video Matting model
+- Pose estimation using the MMPose library
+- Keypoint generation and analysis
+
+The project is designed to be modular and easy to use, allowing you to process videos with minimal setup. The main script `run.py` handles the video processing pipeline, while the `dive-pose-estimator` directory contains the core logic for pose estimation and keypoint generation.
+## Table of Contents
+
+- [Installation](#installation)
+- [Run the project](#run-the-project)
+- [Project Structure](#project-structure)
+  - [Data](#data)
+  - [Dive Pose Estimator](#dive-pose-estimator)
+  - [Models](#models)
+  - [`run.py`](#runpy)
+  - [`requirements.txt`](#requirementstxt)
+- [Conclusion](#conclusion)
+
+
+## Installation
+To set up the project, follow these steps:
+
+1. Clone the repository to your local machine.
+2. Install the required dependencies by running the following command:
+
+```bash
+pip install -r requirements.txt
+```
+Please note that the project requires Python 3.8 or higher (3.12.2 recommended) . Make sure you have the correct version of Python installed on your machine.
 
 ### Run the project
 
