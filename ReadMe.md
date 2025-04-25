@@ -5,27 +5,27 @@
 To process a video, run the following command:
 
 ```bash
-python .\main.py --video ../data/raw/ideal-test.mp4 --output ../data/interim/Ideal.mp4 --live true --rotate false
+python .\run.py --input_video input_video_path --output_base_path output_video_path 
 ```
 
 use the `--help` flag to see all the available options:
 
 ```bash
-python .\main.py --help
+python .\run.py --help
 ```
 
 ### Project Structure
 
-The project is structured as follows:
+The main project is structured as follows:
 
 ```plaintext
 
 ├── data
-│   ├── interim
-│   │   └── Lou.mp4
-│   └── raw
-│       └── Lou_5337D_1.5Salti_vorwaerts_3.5_Schrauben.avi
-├── main.py
+├── dive-pose-estimator
+├── models
+    ├── mmpose
+    ├── RobustVideoMatting
+├── run.py
 ├── README.md
 └── requirements.txt
 
@@ -33,15 +33,40 @@ The project is structured as follows:
 
 ### Data
 
-The `data` directory contains two subdirectories:
+The `data` directory contains the input video files that you want to process. You can place your video files in this directory for easy access.
 
-- `raw`: Contains the raw video file `Lou_5337D_1.5Salti_vorwaerts_3.5_Schrauben.avi`.
-- `interim`: Will contain the processed video file `Lou.mp4`.
+### Dive Pose Estimator
 
-### `main.py`
+The `dive-pose-estimator` directory contains the code for the keypoint generation, json handling and all other functions related to the pose estimation. This is where the main logic for processing the video frames is implemented.
 
-The `main.py` script is the main entry point for the project. It processes the input video file and saves the output to the specified location.
+### Models
 
+This directory contains the pre-trained models used for pose estimation and video matting. The `mmpose` directory contains the models for pose estimation, while the `RobustVideoMatting` directory contains the models for segmentation and matting. These models are used to extract the keypoints and segment the video frames.
+
+These models have to be cloned from their respective repositories and placed in the `models` directory. You can find the repositories here:
+
+1. https://github.com/open-mmlab/mmpose - for pose estimation
+2. https://github.com/PeterL1n/RobustVideoMatting - for video matting
+
+After cloning the repositories, make sure to install the required dependencies for each model. You can do this by following the instructions in their respective README files.
+
+Once you have cloned the repositories and installed the dependencies, you can use the models in your project by importing them in your code. 
+
+1. Copy the bg_remove_rvm.py file from `dive-pose-estimator` directory to models/RobustVideoMatting . This file contains the code for background removal using the Robust Video Matting model.
+2. Copy the pose_estimation.py file from `dive-pose-estimator` directory to models/mmpose/demo folder. This file contains the code for pose estimation using the MMPose model.
+
+Once these files are placed in the correct directories, the run.py script will be able to access them and perform the necessary operations automatically.
+
+### `run.py`
+
+The `run.py` script is the main entry point for the project. It processes each stage of the video processing pipeline. 
+
+It reads the input video files
+Rotates the video and crops if argument is passed
+Segments the video frames using the Robust Video Matting model
+Generates keypoints using the RTMPose model in MMPose
+Generates KPIs (Key Performance Indicators) for the video frames
+Saves the processed video frames to a new video file
 
 ### `requirements.txt`
 
@@ -53,14 +78,6 @@ pip install -r requirements.txt
 
 ```
 
-### Questions
-
-1. Is the camera angle going to be fixed?
-2. Background to be removed or not?
-3. How many frames per second are required?
-4. Video format to be used (input and output)?
-5. Multiple people in the video, how to handle that?
-
 ### Conclusion
 
-In this project, we have processed a video file to create a new video with rotated frames. This can be useful for scenarios where the original video was recorded at an incorrect angle or orientation. By rotating the frames, we can correct the orientation of the video and make it more visually appealing. This project demonstrates how to read a video file, process its frames, and save the output to a new video file. The code can be easily modified to handle different video formats, frame rotations, and other processing tasks. By understanding the basics of video processing, you can build more advanced applications that involve video analysis, object detection, and other computer vision tasks.
+This project provides a comprehensive pipeline for processing videos using pose estimation and video matting techniques. By following the instructions in this README, you should be able to set up the project and run it successfully. If you have any questions or issues, feel free to reach out for help.
