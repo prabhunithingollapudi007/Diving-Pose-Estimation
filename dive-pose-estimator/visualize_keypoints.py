@@ -42,7 +42,8 @@ frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 output_width = frame_width * 2  # Side-by-side layout
 output_height = frame_height
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter(output_video_path, fourcc, fps, (output_width, output_height))
+fourcc_webm = cv2.VideoWriter_fourcc(*'VP80')
+out = cv2.VideoWriter(output_video_path, fourcc_webm, fps, (output_width, output_height))
 
 # Tracking Variables
 frame_idx = 0

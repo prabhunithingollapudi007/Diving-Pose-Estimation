@@ -31,7 +31,7 @@ async def upload_video(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
 
     # Define output paths
-    output_video_path = f"{OUTPUT_DIR}/{file_id}_out.mp4"
+    output_video_path = f"{OUTPUT_DIR}/{file_id}_out.webm"
     output_json_path = f"{OUTPUT_DIR}/{file_id}_metrics.json"
 
     # Run your pipeline
@@ -44,8 +44,8 @@ async def upload_video(file: UploadFile = File(...)):
 
 @app.get("/result/video/{file_id}")
 async def get_video(file_id: str):
-    video_path = f"{OUTPUT_DIR}/{file_id}_out.mp4"
-    return FileResponse(video_path, media_type="video/mp4")
+    video_path = f"{OUTPUT_DIR}/{file_id}_out.webm"
+    return FileResponse(video_path, media_type="video/webm")
 
 @app.get("/result/metrics/{file_id}")
 async def get_metrics(file_id: str):

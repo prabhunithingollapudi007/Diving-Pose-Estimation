@@ -14,7 +14,7 @@ def run_pipeline(input_path: str, output_video_path: str, output_json_path: str)
     # read the json file
     joint_angles_file = f"{OUTPUT_DIR}/joint_angles.json"
     filtered_metrics_file = f"{OUTPUT_DIR}/filtered_metrics.json"
-    video_file = f"{OUTPUT_DIR}/pose_estimation_output.mp4"
+    video_file = f"{OUTPUT_DIR}/pose_estimation_output.webm"
     with open(joint_angles_file, "r") as f:
         joint_angles = json.load(f)
     with open(filtered_metrics_file, "r") as f:
