@@ -5,13 +5,12 @@ import sys
 OUTPUT_DIR = "outputs/"
 run_file = "run.py"
 python_path = "python"  
-LOG_FILE = f"{OUTPUT_DIR}/pipeline_logs.txt"  # Define the log file path
 
-def run_pipeline(input_path: str, output_video_path: str, output_json_path: str, rotate: bool,
+def run_pipeline(input_path: str, output_video_path: str, output_json_path: str, log_file_path: str, rotate: bool,
                  stage_detection: bool, start_time:float, end_time: float, board_height:float, diver_height:float):
     
     original_stdout = sys.stdout  # Save the original stdout
-    with open(LOG_FILE, "w") as log_file:
+    with open(log_file_path, "w") as log_file:
         class Logger:
             def write(self, message):
                 sys.__stdout__.write(message)
@@ -25,7 +24,6 @@ def run_pipeline(input_path: str, output_video_path: str, output_json_path: str,
         # Save pose-estimated video to output_video_path
         # Save metrics to output_json_path as JSON
 
-        # clear the contents of the output directory
         # Clear the contents of the output directory (delete files only)
         if os.path.exists(OUTPUT_DIR):
             for file_name in os.listdir(OUTPUT_DIR):
@@ -81,7 +79,6 @@ def run_pipeline(input_path: str, output_video_path: str, output_json_path: str,
             )
             for line in process.stdout:
                 print(line, end="")
-                log_file.write(line)  # Write to log file in real time
             process.wait()
             if process.returncode != 0:
                 raise Exception(f"Pipeline failed with exit code {process.returncode}")

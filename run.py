@@ -43,7 +43,7 @@ start_time = args.start_time
 end_time = args.end_time
 
 stage_detection = args.stage_detection
-autoTrim = True
+autoTrim = False
 board_height = args.board_height
 diver_height = args.diver_height
 

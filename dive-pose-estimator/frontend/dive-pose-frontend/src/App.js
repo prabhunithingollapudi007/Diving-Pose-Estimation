@@ -36,11 +36,36 @@ export default function DivePoseUI() {
   const [videoUrl, setVideoUrl] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [error, setError] = useState(null);
+  const [logs, setLogs] = useState("");
+  const [showLogs, setShowLogs] = useState(false);
+
+  const fetchGlobalLogs = async () => {
+    try {
+      const logsRes = await axios.get("http://localhost:8000/logs");
+      let logsText = "";
+      if (logsRes.data && typeof logsRes.data === 'object' && logsRes.data.logs) {
+        logsText = logsRes.data.logs.replace(/\\n/g, '\n');
+      } else if (typeof logsRes.data === 'string') {
+        logsText = logsRes.data.replace(/\\n/g, '\n');
+      } else {
+        logsText = JSON.stringify(logsRes.data, null, 2);
+      }
+      setLogs(logsText);
+    } catch (e) {
+      setLogs("Failed to fetch global logs : " + (e.response?.data?.detail || e.message));
+    }
+  };
+
+  // Fetch logs on first render
+  React.useEffect(() => {
+    fetchGlobalLogs();
+  }, []);
 
   const handleUpload = async () => {
     if (!file) return;
     setProcessing(true);
     setError(null);
+    // Don't clear logs here, keep them global
     const formData = new FormData();
     formData.append("file", file);
     formData.append("rotate", rotate);
@@ -59,10 +84,11 @@ export default function DivePoseUI() {
           responseType: "blob",
         });
         const metricsRes = await axios.get(`http://localhost:8000${metrics_url}`);
-
         setVideoUrl(URL.createObjectURL(videoRes.data));
         setMetrics(JSON.parse(metricsRes.data));
         setProcessing(false);
+        // Optionally refresh logs after upload
+        fetchGlobalLogs();
       }, 5000);
     } catch (err) {
       setError(
@@ -195,6 +221,33 @@ export default function DivePoseUI() {
             {renderLineChart("Diver Height (m)", metrics.filtered_metrics.diver_heights, '#3b82f6')}
             {renderLineChart("Total Rotation Over Time (°)", metrics.filtered_metrics.total_rotation_over_time, '#f97316')}
             {renderLineChart("Rotation Rate (°/s)", metrics.filtered_metrics.rotation_rate, '#10b981')}
+          </div>
+        )}
+
+        {logs && (
+          <div className="mb-4">
+            <button
+              onClick={() => setShowLogs(!showLogs)}
+              className="btn btn-outline-secondary btn-sm d-flex align-items-center me-2"
+              type="button"
+            >
+              <span className="me-2">
+                {showLogs ? '▼' : '▶'}
+              </span>
+              View Global Logs
+            </button>
+            <button
+              onClick={fetchGlobalLogs}
+              className="btn btn-outline-primary btn-sm ms-2"
+              type="button"
+            >
+              Refresh Logs
+            </button>
+            {showLogs && (
+              <div className="mt-3 border rounded p-3 bg-light" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                <pre className="font-monospace small mb-0" style={{ whiteSpace: 'pre-wrap' }}>{logs}</pre>
+              </div>
+            )}
           </div>
         )}
       </div>

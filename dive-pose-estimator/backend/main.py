@@ -40,6 +40,7 @@ async def upload_video(file: UploadFile = File(...),
     # Define output paths
     output_video_path = f"{OUTPUT_DIR}/{file_id}_out.webm"
     output_json_path = f"{OUTPUT_DIR}/{file_id}_metrics.json"
+    log_file_path = f"{OUTPUT_DIR}/pipeline_logs.txt"
     
     """ # Parameters for the pipeline
     rotate = True  # Set to True if you want to rotate the video
@@ -50,7 +51,7 @@ async def upload_video(file: UploadFile = File(...),
     diver_height = 1.75 """
 
     # Run your pipeline
-    ex = run_pipeline(input_path, output_video_path, output_json_path, rotate, stage_detection, start_time, end_time, board_height, diver_height)
+    ex = run_pipeline(input_path, output_video_path, output_json_path, log_file_path, rotate, stage_detection, start_time, end_time, board_height, diver_height)
 
     if isinstance(ex, Exception):
         return JSONResponse(status_code=500, content={"error": str(ex)})
@@ -71,3 +72,13 @@ async def get_metrics(file_id: str):
     with open(json_path, "r") as f:
         data = f.read()
     return JSONResponse(content=data)
+
+@app.get("/logs/")
+async def get_logs():
+    log_path = f"{OUTPUT_DIR}/pipeline_logs.txt"
+    if not os.path.exists(log_path):
+        return JSONResponse(status_code=404, content={"error": "Log file not found"})
+    
+    with open(log_path, "r") as f:
+        logs = f.read()
+    return JSONResponse(content={"logs": logs})
