@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000" # Map host port 8000 to container port 8000
+    environment:
+      # Example: if your FastAPI app needs to know its own URL for some reason
+      - API_HOST=http://backend:8000
+    depends_on:
+      # Ensures the backend container starts before the frontend (useful for initial setup)
+      - frontend 
+    networks:
+      - app_network
+
+  frontend:
+    build:
+      context: ./frontend/dive-pose-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80" # Map host port 3000 to frontend container's exposed port 80 (Nginx)
+    environment:
+      # Pass the backend URL to the frontend.
+      # 'backend' is the service name, which Docker Compose resolves to its IP
+      # If your frontend is React, this might be REACT_APP_API_URL
+      - REACT_APP_API_URL=http://localhost:8000 # Use localhost:8000 for host access, or http://backend:8000 for container-to-container
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge

@@ -1,5 +1,5 @@
 # backend/main.py
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import shutil
@@ -23,7 +23,14 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 @app.post("/upload/")
-async def upload_video(file: UploadFile = File(...)):
+async def upload_video(file: UploadFile = File(...),
+    rotate: bool = Form(...),
+    stage_detection: bool = Form(...),
+    start_time: float = Form(...),
+    end_time: float = Form(...),
+    board_height: float = Form(...),
+    diver_height: float = Form(...)
+                       ):
     # Save uploaded video
     file_id = str(uuid.uuid4())
     input_path = f"{UPLOAD_DIR}/{file_id}.mp4"
@@ -33,9 +40,20 @@ async def upload_video(file: UploadFile = File(...)):
     # Define output paths
     output_video_path = f"{OUTPUT_DIR}/{file_id}_out.webm"
     output_json_path = f"{OUTPUT_DIR}/{file_id}_metrics.json"
+    
+    """ # Parameters for the pipeline
+    rotate = True  # Set to True if you want to rotate the video
+    stage_detection = False  # Set to True if you want to detect stages
+    start_time = 12  # Start
+    end_time = 18
+    board_height = 5
+    diver_height = 1.75 """
 
     # Run your pipeline
-    run_pipeline(input_path, output_video_path, output_json_path)
+    ex = run_pipeline(input_path, output_video_path, output_json_path, rotate, stage_detection, start_time, end_time, board_height, diver_height)
+
+    if isinstance(ex, Exception):
+        return JSONResponse(status_code=500, content={"error": str(ex)})
 
     return {
         "video_url": f"/result/video/{file_id}",

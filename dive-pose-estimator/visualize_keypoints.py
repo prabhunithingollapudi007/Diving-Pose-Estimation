@@ -20,7 +20,7 @@ output_base_path = parser.parse_args().output_base_path
 trimmed_video_path = parser.parse_args().input_video
 
 file_path = f'{output_base_path}/predictions.json'
-output_video_path = f"{output_base_path}/pose_estimation_output.mp4"
+output_video_path = f"{output_base_path}/pose_estimation_output.webm"
 stage_detection = parser.parse_args().stage_detection
 
 # Load JSON file
@@ -41,7 +41,7 @@ frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 # Create VideoWriter for output
 output_width = frame_width * 2  # Side-by-side layout
 output_height = frame_height
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+# fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 fourcc_webm = cv2.VideoWriter_fourcc(*'VP80')
 out = cv2.VideoWriter(output_video_path, fourcc_webm, fps, (output_width, output_height))
 

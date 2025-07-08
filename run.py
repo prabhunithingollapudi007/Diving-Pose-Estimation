@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 import warnings
 import os
 import time
+import re
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=ResourceWarning)
@@ -19,9 +20,11 @@ parser.add_argument("--rotate", action="store_true", help="Rotate the video")
 parser.add_argument("--stage_detection", action="store_true", help="Detect stages")
 parser.add_argument("--start_time", type=float, default=None, help="Start time for processing in seconds")
 parser.add_argument("--end_time", type=float, default=None, help="End time for processing in seconds")
+parser.add_argument("--board_height", type=float, default=5, help="Height of the diver board")
+parser.add_argument("--diver_height", type=float, default=1.5, help="Height of the diver")
 
-python_path = "C:/Users/prabh/.conda/envs/openmmlab/python.exe"
-# python_path = "python"  # Use this if you want to run it in a different environment
+# python_path = "C:/Users/prabh/.conda/envs/openmmlab/python.exe"
+python_path = "python"  # Use this if you want to run it in a different environment
 
 step_end_string = "=================================================================="
 
@@ -40,6 +43,26 @@ start_time = args.start_time
 end_time = args.end_time
 stage_detection = args.stage_detection
 autoTrim = False
+board_height = args.board_height
+diver_height = args.diver_height
+
+# update the values in config.py file
+config_path = "dive-pose-estimator/config.py"
+with open(config_path, "r") as file:
+    config_content = file.read()
+config_content = re.sub(
+    r"BOARD_HEIGHT_METERS\s*=\s*[\d\.]+",
+    f"BOARD_HEIGHT_METERS = {board_height}",
+    config_content,
+)
+config_content = re.sub(
+    r"INITIAL_DIVER_HEIGHT_METERS\s*=\s*[\d\.]+",
+    f"INITIAL_DIVER_HEIGHT_METERS = {diver_height}",
+    config_content,
+)
+
+with open(config_path, "w") as file:
+    file.write(config_content)
 
 print("Processing video with the following parameters:")
 print(f"Input video: {input_video}")
