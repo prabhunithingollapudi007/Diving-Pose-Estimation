@@ -18,8 +18,8 @@ output_video = f"{output_base_path}/rotated_video.mp4"
 start_time = parser.parse_args().start_time
 end_time = parser.parse_args().end_time
 
-print(f"Input Video path: {input_video}")
-print(f"Output Video path: {output_video}")
+print(f"Input Video path for rotation: {input_video}")
+print(f"Output Video path for rotation: {output_video}")
 rotate = parser.parse_args().rotate
 cap = cv2.VideoCapture(input_video)
 fps = FPS
@@ -92,6 +92,6 @@ cv2.destroyAllWindows()
 end_ticks = cv2.getTickCount()
 
 total_time = (end_ticks - start_ticks) / cv2.getTickFrequency()
-print(f"Total time taken: {total_time:.2f} seconds for {frame_count} frames")
+print(f"Total time taken for rotation: {total_time:.2f} seconds for {frame_count} frames")
 
 print(f"Output video saved at {output_video}")

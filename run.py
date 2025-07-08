@@ -41,8 +41,9 @@ output_base_path = args.output_base_path
 rotate = args.rotate
 start_time = args.start_time
 end_time = args.end_time
+
 stage_detection = args.stage_detection
-autoTrim = False
+autoTrim = True
 board_height = args.board_height
 diver_height = args.diver_height
 
@@ -63,6 +64,11 @@ config_content = re.sub(
 
 with open(config_path, "w") as file:
     file.write(config_content)
+
+if start_time == 0:
+    start_time = None
+if end_time == 0:
+    end_time = None
 
 print("Processing video with the following parameters:")
 print(f"Input video: {input_video}")
@@ -118,7 +124,8 @@ subprocess.run(command, stderr=subprocess.DEVNULL)
 print(step_end_string)
 
 # Step 3: Auto Trim the video if start and end time are not provided
-if start_time is None and end_time is None:
+skip_auto_trim = True
+if not skip_auto_trim:
     command = [
         python_path,
         "dive-pose-estimator/trim_video.py",

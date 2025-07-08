@@ -130,7 +130,7 @@ export default function DivePoseUI() {
             Stage Detection
           </label>
           <label className="mb-2 w-full form-label w-100">
-            <span className="block mb-1">Start Time (s)</span>
+            <span className="block mb-1">Dive Start Time (s)</span>
             <input
               type="number"
               step="any"
@@ -141,7 +141,7 @@ export default function DivePoseUI() {
             />
           </label>
           <label className="mb-2 w-full form-label w-100">
-            <span className="block mb-1">End Time (s)</span>
+            <span className="block mb-1">Dive End Time (s)</span>
             <input
               type="number"
               step="any"
